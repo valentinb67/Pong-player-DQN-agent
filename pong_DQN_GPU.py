@@ -10,9 +10,7 @@ import torch.optim as optim
 # Initialisation de pygame
 pygame.init()
 
-# Vérification de la disponibilité de CUDA -> Permet l'utilisation du GPU plutôt que du CPU, permettant de 
-# mieux paraléliser les opérations et accélérer la convergence en augmententant notamment la 'batch_size'.
-
+# Vérification de la disponibilité de CUDA
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Dimensions de la fenêtre du jeu
@@ -38,9 +36,14 @@ gamma = 0.99
 epsilon = 0.9
 epsilon_decay = 0.995
 epsilon_min = 0.1
-batch_size = 128 #Can move between ['64', '128', '256']
+batch_size = 128
 memory_size = 10000
 target_update = 10
+
+# Nbr d episode
+max_episodes = 10000
+episode_count = 0 
+
 memory = deque(maxlen=memory_size)
 
 # Paramètres du jeu
@@ -128,7 +131,7 @@ def reinitialiser_jeu():
 
 # Boucle principale du jeu
 frames = 0
-while True:
+while episode_count < max_episodes:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -172,11 +175,13 @@ while True:
         reward = -10
         done = True
         reinitialiser_jeu()
+        episode_count += 1  # Incrémenter le compteur d'épisodes
 
     if balle.right >= largeur:  # Si la balle sort du côté de l'ordinateur
         reward = 10
         done = True
         reinitialiser_jeu()
+        episode_count += 1  # Incrémenter le compteur d'épisodes
 
     # Récupérer le nouvel état
     next_state = obtenir_etat_discret()
@@ -205,3 +210,8 @@ while True:
 
     # Limite de rafraîchissement
     pygame.time.Clock().tick(60)
+
+# Fin de l'entraînement
+print(f"Entraînement terminé après {episode_count} épisodes.")
+pygame.quit()
+sys.exit()
