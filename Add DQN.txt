@@ -1,0 +1,17 @@
+Ajout v3 -> v4:
+
+Améliorations apportées :
+
+Des informations quant à l'interface présents sur l'interface (Epsilon, Nbr touche, Nbr de touche dans la session en cours,Nbr d'épisode.
+
+
+
+V4-DQN:
+Réseau de neurones (DQN) : 
+Le modèle est constitué de trois couches entièrement connectées (fully connected) avec des activations ReLU. Il prend en entrée l'état du jeu (5 valeurs : positions et vitesses) et prédit les valeurs Q pour les 3 actions possibles (UP, DOWN, STAY).
+
+Replay Buffer : 
+Les transitions (état, action, récompense, état suivant, done) sont stockées dans un buffer de taille fixe (ici 10 000 transitions) et un batch aléatoire de transitions est utilisé pour l'entraînement du réseau.
+
+Réseau cible (target_net) :
+ Le réseau cible est mis à jour toutes les 10 frames avec les poids du réseau principal pour stabiliser l'entraînement.
