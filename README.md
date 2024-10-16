@@ -1,1 +1,3 @@
 # Pong-player-DQN-agent
+
+As part of the unsupervised learning course in the second year of the Master Data science for business and economics program, this project aims to train a DQN Agent to play in a Pong environment. We'll be looking at a number of approaches, including training with a Q-Learning Agent, before moving on to a DQN Agent which, thanks to its NN architecture, will be able to converge more quickly in a 640*480 environment. We'll also be playing with the DQN's hyperparameters, for which we'll first exploit CPU resources and then GPU resources from the pytorch package using cuda.
