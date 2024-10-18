@@ -6,6 +6,8 @@ from collections import deque
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import csv
+import time  # Pour mesurer la durée de l'épisode
 
 # Initialisation de pygame
 pygame.init()
@@ -40,15 +42,15 @@ font = pygame.font.Font(None, 36)
 # Hyperparamètres DQN
 alpha = 0.001
 gamma = 0.99
-epsilon = 0.998
-epsilon_decay = 0.998
+epsilon = 0.9
+epsilon_decay = 0.995
 epsilon_min = 0.1
 batch_size = 128
-memory_size = 100000
+memory_size = 10000
 target_update = 10
 
-# Nbr d episode
-max_episodes = 10000
+# Nbr d'épisodes
+max_episodes = 200
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
@@ -56,6 +58,11 @@ memory = deque(maxlen=memory_size)
 # Paramètres du jeu
 actions = ["UP", "DOWN", "STAY"]
 nb_actions = len(actions)
+
+# Variables pour l'enregistrement des données d'entraînement
+csv_file = open('dqn_training_log.csv', mode='w', newline='')
+csv_writer = csv.writer(csv_file)
+csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss'])
 
 # Modèle de réseau de neurones pour DQN
 class DQN(nn.Module):
@@ -105,7 +112,7 @@ def stocker_transition(state, action, reward, next_state, done):
 
 def entrainer_dqn():
     if len(memory) < batch_size:
-        return
+        return 0  # Pas d'entraînement si la mémoire est insuffisante
 
     batch = random.sample(memory, batch_size)
     states, actions, rewards, next_states, dones = zip(*batch)
@@ -125,14 +132,21 @@ def entrainer_dqn():
     loss.backward()
     optimizer.step()
 
+    return loss.item()  # Retourner la perte pour le suivi
+
 def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
     vitesse_balle_y = 12 * random.choice([-1, 1])
 
+# Boucle principale
 frames = 0
 while episode_count < max_episodes:
+    episode_reward = 0
+    episode_loss = 0  # Suivi de la perte totale pour l'épisode
+    start_time = time.time()  # Début de l'épisode
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -178,9 +192,12 @@ while episode_count < max_episodes:
         reinitialiser_jeu()
         episode_count += 1
 
+    episode_reward += reward  # Ajout de la récompense au total de l'épisode
+
     next_state = obtenir_etat_discret()
     stocker_transition(state, action_idx, reward, next_state, done)
-    entrainer_dqn()
+    loss = entrainer_dqn()
+    episode_loss += loss  # Ajout de la perte pour chaque batch
 
     frames += 1
     if frames % target_update == 0:
@@ -198,6 +215,14 @@ while episode_count < max_episodes:
 
     pygame.display.flip()
     pygame.time.Clock().tick(60)
+
+    # Si l'épisode est terminé, on enregistre les informations dans le CSV
+    if done:
+        episode_duration = time.time() - start_time
+        csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss])
+
+# Fermer le fichier CSV après l'entraînement
+csv_file.close()
 
 pygame.quit()
 sys.exit()
