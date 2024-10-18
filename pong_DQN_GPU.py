@@ -30,19 +30,26 @@ balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
 vitesse_balle_x = -12
 vitesse_balle_y = 12 * random.choice([-1, 1])
 
+# Initialisation des scores
+score_joueur1 = 0
+score_joueur2 = 0
+
+# Police d'affichage des scores
+font = pygame.font.Font(None, 36)
+
 # Hyperparamètres DQN
 alpha = 0.001
 gamma = 0.99
-epsilon = 0.9
-epsilon_decay = 0.995
+epsilon = 0.998
+epsilon_decay = 0.998
 epsilon_min = 0.1
 batch_size = 128
-memory_size = 10000
+memory_size = 100000
 target_update = 10
 
 # Nbr d episode
 max_episodes = 10000
-episode_count = 0 
+episode_count = 0
 
 memory = deque(maxlen=memory_size)
 
@@ -73,7 +80,6 @@ target_net.eval()
 optimizer = optim.Adam(policy_net.parameters(), lr=alpha)
 loss_fn = nn.MSELoss()
 
-# Fonction pour discrétiser l'état
 def discretiser(val, intervalle, nb_divisions):
     return min(nb_divisions - 1, max(0, int(val / intervalle * nb_divisions)))
 
@@ -85,7 +91,6 @@ def obtenir_etat_discret():
     raquette_pos = discretiser(raquette2.y, hauteur, 20)
     return np.array([etat_x, etat_y, etat_vx, etat_vy, raquette_pos], dtype=np.float32)
 
-# Fonction pour choisir une action (epsilon-greedy)
 def choisir_action(state):
     global epsilon
     if random.uniform(0, 1) < epsilon:
@@ -95,11 +100,9 @@ def choisir_action(state):
             state_tensor = torch.tensor(state).to(device)
             return policy_net(state_tensor).argmax().item()
 
-# Fonction pour stocker la transition
 def stocker_transition(state, action, reward, next_state, done):
     memory.append((state, action, reward, next_state, done))
 
-# Fonction de mise à jour du DQN
 def entrainer_dqn():
     if len(memory) < batch_size:
         return
@@ -122,14 +125,12 @@ def entrainer_dqn():
     loss.backward()
     optimizer.step()
 
-# Fonction pour réinitialiser le jeu
 def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
     vitesse_balle_y = 12 * random.choice([-1, 1])
 
-# Boucle principale du jeu
 frames = 0
 while episode_count < max_episodes:
     for event in pygame.event.get():
@@ -137,81 +138,66 @@ while episode_count < max_episodes:
             pygame.quit()
             sys.exit()
 
-    # Réduire epsilon (exploration)
     epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
-    # Récupérer l'état actuel
     state = obtenir_etat_discret()
 
-    # Mouvement de la raquette du joueur 1
     raquette1.y = balle.y
     
-    # Choisir une action
     action_idx = choisir_action(state)
     action = actions[action_idx]
 
-    # Exécuter l'action
     if action == "UP" and raquette2.top > 0:
         raquette2.y -= 10
     elif action == "DOWN" and raquette2.bottom < hauteur:
         raquette2.y += 10
 
-    # Déplacement de la balle
     balle.x += vitesse_balle_x
     balle.y += vitesse_balle_y
 
-    # Rebond de la balle sur les bords
     if balle.top <= 0 or balle.bottom >= hauteur:
         vitesse_balle_y = -vitesse_balle_y
 
-    # Récompense et nouvelle transition
     reward = 0
     if balle.colliderect(raquette1) or balle.colliderect(raquette2):
         vitesse_balle_x = -vitesse_balle_x
         reward = 1
 
     done = False
-    if balle.left <= 0:  # Si la balle sort du côté du joueur
+    if balle.left <= 0:
+        score_joueur2 += 1  # Mise à jour du score du joueur 2
         reward = -10
         done = True
         reinitialiser_jeu()
-        episode_count += 1  # Incrémenter le compteur d'épisodes
+        episode_count += 1
 
-    if balle.right >= largeur:  # Si la balle sort du côté de l'ordinateur
+    if balle.right >= largeur:
+        score_joueur1 += 1  # Mise à jour du score du joueur 1
         reward = 10
         done = True
         reinitialiser_jeu()
-        episode_count += 1  # Incrémenter le compteur d'épisodes
+        episode_count += 1
 
-    # Récupérer le nouvel état
     next_state = obtenir_etat_discret()
-
-    # Stocker la transition
     stocker_transition(state, action_idx, reward, next_state, done)
-
-    # Entraîner le DQN
     entrainer_dqn()
 
-    # Mettre à jour le réseau cible tous les target_update épisodes
     frames += 1
     if frames % target_update == 0:
         target_net.load_state_dict(policy_net.state_dict())
 
-    # Effacer l'écran
     fenetre.fill((0, 0, 0))
 
-    # Dessiner les raquettes et la balle
     pygame.draw.rect(fenetre, blanc, raquette1)
     pygame.draw.rect(fenetre, blanc, raquette2)
     pygame.draw.ellipse(fenetre, blanc, balle)
 
-    # Rafraîchir l'écran
-    pygame.display.flip()
+    # Affichage des scores
+    score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
+    fenetre.blit(score_text, (largeur // 2 - 100, 10))
 
-    # Limite de rafraîchissement
+    pygame.display.flip()
     pygame.time.Clock().tick(60)
 
-# Fin de l'entraînement
-print(f"Entraînement terminé après {episode_count} épisodes.")
 pygame.quit()
 sys.exit()
