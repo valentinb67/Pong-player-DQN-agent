@@ -173,8 +173,14 @@ while episode_count < max_episodes:
         vitesse_balle_y = -vitesse_balle_y
 
     reward = 0
-    if balle.colliderect(raquette1) or balle.colliderect(raquette2):
+    
+    if balle.colliderect(raquette1):
         vitesse_balle_x = -vitesse_balle_x
+        balle.left = raquette1.right
+        
+    if balle.colliderect(raquette2):
+        vitesse_balle_x = -vitesse_balle_x
+        balle.right = raquette2.left
         reward = 1
 
     done = False
@@ -187,7 +193,7 @@ while episode_count < max_episodes:
 
     if balle.right >= largeur:
         score_joueur1 += 1  # Mise à jour du score du joueur 1
-        reward = 10
+        reward = -10
         done = True
         reinitialiser_jeu()
         episode_count += 1

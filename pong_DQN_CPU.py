@@ -163,8 +163,14 @@ while True:
 
     # Récompense et nouvelle transition
     reward = 0
-    if balle.colliderect(raquette1) or balle.colliderect(raquette2):
+    
+    if balle.colliderect(raquette1):
         vitesse_balle_x = -vitesse_balle_x
+        balle.left = raquette1.right
+        
+    if balle.colliderect(raquette2):
+        vitesse_balle_x = -vitesse_balle_x
+        balle.right = raquette2.left
         reward = 1
 
     done = False
@@ -174,7 +180,7 @@ while True:
         reinitialiser_jeu()
 
     if balle.right >= largeur:  # Si la balle sort du côté de l'ordinateur
-        reward = 10
+        reward = -10
         done = True
         reinitialiser_jeu()
 
