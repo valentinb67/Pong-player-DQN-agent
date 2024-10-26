@@ -9,12 +9,11 @@ import torch.optim as optim
 import csv
 import time  # Pour mesurer la durée de l'épisode
 
-print(torch.cuda.device_count())
 # Initialisation de pygame
 pygame.init()
 
 # Vérification de la disponibilité de CUDA
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Dimensions de la fenêtre du jeu
 largeur, hauteur = 640, 480
@@ -40,7 +39,7 @@ score_joueur2 = 0
 # Police d'affichage des scores
 font = pygame.font.Font(None, 36)
 
-# Hyperparamètres DQN
+# Hyperparamètres Double DQN
 alpha = 0.001
 gamma = 0.99
 epsilon = 0.9
@@ -51,19 +50,18 @@ memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 10
+max_episodes = 175
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
 
 # Paramètres du jeu
-actions = ["UP", "DOWN", "STAY"]
-nb_actions = len(actions)
+nb_actions = 3  # UP, DOWN, STAY
 
 # Variables pour l'enregistrement des données d'entraînement
-csv_file = open('pong_dqn_discret_training_log.csv', mode='w', newline='')
+csv_file = open('pong_ddqn_test.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error', 'Touches Joueur 2', 'Touches Cumulees Joueur 2'])
+csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error'])
 
 # Modèle de réseau de neurones pour DQN
 class DQN(nn.Module):
@@ -124,8 +122,10 @@ def entrainer_dqn():
     next_states = torch.tensor(next_states).to(device)
     dones = torch.tensor(dones, dtype=torch.float32).to(device)
 
+    # Double DQN
     q_values = policy_net(states).gather(1, actions).squeeze()
-    next_q_values = target_net(next_states).max(1)[0]
+    next_actions = policy_net(next_states).argmax(1).unsqueeze(1)
+    next_q_values = target_net(next_states).gather(1, next_actions).squeeze()
     expected_q_values = rewards + (gamma * next_q_values * (1 - dones))
 
     loss = loss_fn(q_values, expected_q_values.detach())
@@ -148,101 +148,91 @@ def reinitialiser_jeu():
 
 # Boucle principale
 frames = 0
-touches_joueur2 = 0
-touches_cumulees_joueur2 = 0
-
 while episode_count < max_episodes:
     episode_reward = 0
     episode_loss = 0  # Suivi de la perte totale pour l'épisode
     start_time = time.time()  # Début de l'épisode
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    state = obtenir_etat_discret()
+
+    raquette1.y = balle.y
+    
+    action_idx = choisir_action(state)
+    if action_idx == 0 and raquette2.top > 0:
+        raquette2.y -= 10
+    elif action_idx == 1 and raquette2.bottom < hauteur:
+        raquette2.y += 10
+
+    balle.x += vitesse_balle_x
+    balle.y += vitesse_balle_y
+
+    if balle.top <= 0 or balle.bottom >= hauteur:
+        vitesse_balle_y = -vitesse_balle_y
+
+    reward = 0
+    
+    if balle.colliderect(raquette1):
+        vitesse_balle_x = -vitesse_balle_x
+        balle.left = raquette1.right
+        
+    if balle.colliderect(raquette2):
+        vitesse_balle_x = -vitesse_balle_x
+        balle.right = raquette2.left
+        reward = 1
+
     done = False
+    if balle.left <= 0:
+        score_joueur2 += 1  # Mise à jour du score du joueur 2
+        reward = -10
+        done = True
+        reinitialiser_jeu()
+        episode_count += 1
 
-    while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+    if balle.right >= largeur:
+        score_joueur1 += 1  # Mise à jour du score du joueur 1
+        reward = -10
+        done = True
+        reinitialiser_jeu()
+        episode_count += 1
 
-        state = obtenir_etat_discret()
+    episode_reward += reward  # Ajout de la récompense au total de l'épisode
 
-        raquette1.y = balle.y
-        
-        action_idx = choisir_action(state)
-        action = actions[action_idx]
+    next_state = obtenir_etat_discret()
+    stocker_transition(state, action_idx, reward, next_state, done)
+    loss, true_values, value_estimates, td_errors = entrainer_dqn()
+    episode_loss += loss  # Ajout de la perte pour chaque batch
 
-        if action == "UP" and raquette2.top > 0:
-            raquette2.y -= 10
-        elif action == "DOWN" and raquette2.bottom < hauteur:
-            raquette2.y += 10
+    frames += 1
+    if frames % target_update == 0:
+        target_net.load_state_dict(policy_net.state_dict())
 
-        balle.x += vitesse_balle_x
-        balle.y += vitesse_balle_y
+    fenetre.fill((0, 0, 0))
 
-        if balle.top <= 0 or balle.bottom >= hauteur:
-            vitesse_balle_y = -vitesse_balle_y
+    pygame.draw.rect(fenetre, blanc, raquette1)
+    pygame.draw.rect(fenetre, blanc, raquette2)
+    pygame.draw.ellipse(fenetre, blanc, balle)
 
-        reward = 0
-        
-        if balle.colliderect(raquette1):
-            vitesse_balle_x = -vitesse_balle_x
-            balle.left = raquette1.right
-            
-        if balle.colliderect(raquette2):
-            vitesse_balle_x = -vitesse_balle_x
-            balle.right = raquette2.left
-            reward = 1
-            touches_joueur2 += 1
-            touches_cumulees_joueur2 += 1
+    # Affichage des scores
+    score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
+    fenetre.blit(score_text, (largeur // 2 - 100, 10))
 
-        if balle.left <= 0:
-            score_joueur2 += 1  # Mise à jour du score du joueur 2
-            reward = -10
-            done = True
-            reinitialiser_jeu()
-            episode_count += 1
-
-        if balle.right >= largeur:
-            score_joueur1 += 1  # Mise à jour du score du joueur 1
-            reward = -10
-            done = True
-            reinitialiser_jeu()
-            episode_count += 1
-
-        episode_reward += reward  # Ajout de la récompense au total de l'épisode
-
-        next_state = obtenir_etat_discret()
-        stocker_transition(state, action_idx, reward, next_state, done)
-        loss, true_values, value_estimates, td_errors = entrainer_dqn()
-        episode_loss += loss  # Ajout de la perte pour chaque batch
-
-        frames += 1
-        if frames % target_update == 0:
-            target_net.load_state_dict(policy_net.state_dict())
-
-        fenetre.fill((0, 0, 0))
-
-        pygame.draw.rect(fenetre, blanc, raquette1)
-        pygame.draw.rect(fenetre, blanc, raquette2)
-        pygame.draw.ellipse(fenetre, blanc, balle)
-
-        # Affichage des scores
-        score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
-        fenetre.blit(score_text, (largeur // 2 - 100, 10))
-
-        pygame.display.flip()
-        pygame.time.Clock().tick(60)
+    pygame.display.flip()
+    pygame.time.Clock().tick(60)
 
     # Si l'épisode est terminé, on enregistre les informations dans le CSV
-    episode_duration = time.time() - start_time
-    for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
-        csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error, touches_joueur2, touches_cumulees_joueur2])
+    if done:
+        episode_duration = time.time() - start_time
+        for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
+            csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error])
 
-    # Mise à jour d'epsilon à la fin de chaque épisode
-    epsilon = max(epsilon_min, epsilon * epsilon_decay)
-    
-    # Réinitialisation des touches du joueur 2 pour le prochain épisode
-    touches_joueur2 = 0
-        
+        # Mise à jour d'epsilon à la fin de chaque épisode
+        epsilon = max(epsilon_min, epsilon * epsilon_decay)
+
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
 

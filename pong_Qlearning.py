@@ -3,6 +3,8 @@ import sys
 import random
 import numpy as np
 from collections import defaultdict
+import csv
+import time  # Pour mesurer la durée de l'épisode
 
 # Initialisation de pygame
 pygame.init()
@@ -33,20 +35,30 @@ compteur_global = 0  # Compteur du nombre total de touches
 compteur_session = 0  # Compteur de touches pour la session actuelle
 
 # Statistiques d'entraînement
+episode_count = 0
+max_episodes = 2
 epsilon_hist = [] 
 reward_cumule_hist = []
 reward_cumule_episode = 0 
-nombre_episodes = 0 
 
-# Police de texte
-police = pygame.font.Font(None, 36)
-
-# Q-Learning
+# Hyperparamètres du Q-Learning
 actions = ["UP", "DOWN", "STAY"]
 q_table = defaultdict(lambda: np.zeros(len(actions)))
 alpha = 0.7  
 gamma = 0.7  
-epsilon = 0.9  
+
+# Paramètres pour l'exploration epsilon-greedy
+epsilon = 0.9  # Valeur initiale de epsilon
+epsilon_decay = 0.975  # Facteur de décroissance de epsilon
+epsilon_min = 0.1  # Valeur minimale pour epsilon
+
+# CSV File for logging
+csv_file = open('q_learning_log.csv', mode='w', newline='')
+csv_writer = csv.writer(csv_file)
+csv_writer.writerow(['Episode', 'Epsilon', 'Touches Session', 'Touches Globales', 'Reward', 'Episode Reward', 'Episode Duration', 'Episode Loss', 'True Value', 'Value Estimate', 'TD Error'])
+
+# Police de texte
+police = pygame.font.Font(None, 36)
 
 # Fonction pour discrétiser l'état
 def discretiser(val, intervalle, nb_divisions):
@@ -73,6 +85,12 @@ def mise_a_jour_q_table(etat, action, reward, etat_suivant):
     meilleure_action_suivante = np.max(q_table[etat_suivant])
     q_table[etat][action_idx] = q_table[etat][action_idx] + alpha * (reward + gamma * meilleure_action_suivante - q_table[etat][action_idx])
 
+    # Calcul des valeurs pour le CSV (arbitraires pour illustration)
+    true_value = reward + gamma * meilleure_action_suivante
+    value_estimate = q_table[etat][action_idx]
+    td_error = true_value - value_estimate
+    return true_value, value_estimate, td_error
+
 # Fonction pour réinitialiser l'environnement après chaque épisode
 def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
@@ -81,9 +99,14 @@ def reinitialiser_jeu():
     vitesse_balle_y = 12 * random.choice([-1, 1])
 
 # Boucle principale du jeu
-while True:
+while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
+    start_time = time.time()  # Début de l'épisode
+    episode_reward = 0  # Cumul de la récompense pour l'épisode
+    episode_loss = 0  # Suivi de la perte totale pour l'épisode
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            csv_file.close()
             pygame.quit()
             sys.exit()
 
@@ -117,46 +140,59 @@ while True:
     if balle.colliderect(raquette1):
         vitesse_balle_x = -vitesse_balle_x
         balle.left = raquette1.right  # Déplacer la balle juste à droite de la raquette
-        compteur_global += 1  # Incrément du compteur global
-        compteur_session += 1  # Incrément du compteur de session
+        compteur_global += 1
+        compteur_session += 1
         
     # Collision avec la raquette 2
     if balle.colliderect(raquette2):
         vitesse_balle_x = -vitesse_balle_x
-        balle.right = raquette2.left # Déplacer la balle juste à gauche de la raquette
-        reward = 1  # Récompense positive quand la balle est renvoyée
-        reward_cumule_episode += reward  # Ajouter à la récompense cumulée
-        compteur_global += 1  # Incrément du compteur global
-        compteur_session += 1  # Incrément du compteur de session
+        balle.right = raquette2.left
+        reward = 1
+        episode_reward += reward
+        compteur_global += 1
+        compteur_session += 1
 
     # Balle sortie du jeu (perte de point)
-    if balle.left <= 0:  # Si la balle sort du côté du joueur
-        score2 += 1
-        reward = -10
-        reward_cumule_episode += reward
-        compteur_session = 0  # Réinitialiser le compteur de session
-        nombre_episodes += 1  # Fin de l'épisode
-        reward_cumule_hist.append(reward_cumule_episode)  # Stocker la récompense cumulée
-        epsilon_hist.append(epsilon)  # Stocker epsilon
-        reward_cumule_episode = 0  # Réinitialiser les récompenses cumulées pour le prochain épisode
-        reinitialiser_jeu()  # Réinitialiser l'environnement pour le nouvel épisode
+    if balle.left <= 0 or balle.right >= largeur:  # Si la balle sort des limites
+        if balle.left <= 0:  # Perte pour le joueur
+            score2 += 1
+            reward = -10
+        elif balle.right >= largeur:  # Perte pour l'ordinateur
+            score1 += 1
+            reward = -10
 
-    if balle.right >= largeur:  # Si la balle sort du côté de l'ordinateur
-        score1 += 1
-        reward = -10  # Récompense positive pour avoir marqué un point
-        reward_cumule_episode += reward
-        compteur_session = 0  # Réinitialiser le compteur de session
-        nombre_episodes += 1  # Fin de l'épisode
-        reward_cumule_hist.append(reward_cumule_episode)  # Stocker la récompense cumulée
-        epsilon_hist.append(epsilon)  # Stocker epsilon
-        reward_cumule_episode = 0  # Réinitialiser les récompenses cumulées
-        reinitialiser_jeu()  # Réinitialiser l'environnement
+        episode_reward += reward
+        episode_count += 1  # Fin de l'épisode
+        episode_duration = time.time() - start_time  # Durée de l'épisode
+
+        # Décroissance de epsilon après chaque épisode
+        epsilon = max(epsilon_min, epsilon * epsilon_decay)
+
+        # Obtenir l'état suivant après la fin de l'épisode
+        etat_suivant = obtenir_etat_discret()
+
+        # Mise à jour de la Q-Table et calcul des valeurs pour le CSV
+        true_value, value_estimate, td_error = mise_a_jour_q_table(etat, action, reward, etat_suivant)
+
+        # Écrire les informations de l'épisode dans le fichier CSV
+        csv_writer.writerow([
+            episode_count, epsilon, compteur_session, compteur_global, reward, episode_reward,
+            episode_duration, episode_loss, true_value, value_estimate, td_error
+        ])
+
+        # Réinitialiser les compteurs et l'environnement pour le nouvel épisode
+        reinitialiser_jeu()
+        reward_cumule_episode = 0  # Réinitialiser les récompenses cumulées pour le prochain épisode
+        compteur_session = 0  # Réinitialiser les touches de la session uniquement après la fin de l'épisode
+
+        continue  # Passer au prochain épisode sans arrêter le jeu
 
     # Obtenir le nouvel état
     etat_suivant = obtenir_etat_discret()
 
-    # Mise à jour de la Q-Table
-    mise_a_jour_q_table(etat, action, reward, etat_suivant)
+    # Mise à jour de la Q-Table et collecte des valeurs de perte
+    true_value, value_estimate, td_error = mise_a_jour_q_table(etat, action, reward, etat_suivant)
+    episode_loss += abs(td_error)  # Cumul de la perte pour l'épisode
 
     # Effacer l'écran
     fenetre.fill((0, 0, 0))
@@ -179,9 +215,9 @@ while True:
     fenetre.blit(texte_compteur_session, (20, hauteur - 30))
 
     # Affichage des statistiques d'entraînement
-    texte_episodes = police.render(f"Épisodes: {nombre_episodes}", True, blanc)
+    texte_episodes = police.render(f"Épisodes: {episode_count}", True, blanc)
     texte_epsilon = police.render(f"Epsilon: {epsilon:.2f}", True, blanc)
-    texte_reward = police.render(f"Récompense: {reward_cumule_episode}", True, blanc)
+    texte_reward = police.render(f"Récompense: {episode_reward}", True, blanc)
     fenetre.blit(texte_episodes, (largeur - 150, hauteur - 60))
     fenetre.blit(texte_epsilon, (largeur - 150, hauteur - 40))
     fenetre.blit(texte_reward, (largeur - 150, hauteur - 20))
@@ -191,3 +227,7 @@ while True:
 
     # Limite de rafraîchissement
     pygame.time.Clock().tick(60)
+
+# Fermer le fichier CSV après la fin de l'entraînement
+csv_file.close()
+pygame.quit()

@@ -43,7 +43,7 @@ font = pygame.font.Font(None, 36)
 alpha = 0.001
 gamma = 0.99
 epsilon = 0.9
-epsilon_decay = 0.995
+epsilon_decay = 0.975
 epsilon_min = 0.1
 batch_size = 128
 memory_size = 10000
@@ -153,8 +153,6 @@ while episode_count < max_episodes:
             pygame.quit()
             sys.exit()
 
-    epsilon = max(epsilon_min, epsilon * epsilon_decay)
-
     state = obtenir_etat_continu()
 
     raquette1.y = balle.y
@@ -226,7 +224,10 @@ while episode_count < max_episodes:
         episode_duration = time.time() - start_time
         for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
             csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error])
-
+            
+        # Mise à jour d'epsilon à la fin de chaque épisode
+        epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
 
