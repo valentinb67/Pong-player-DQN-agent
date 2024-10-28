@@ -30,27 +30,27 @@ balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
 
 # Vitesses initiales de la balle
 vitesse_balle_x = -12
-vitesse_balle_y = 12 * random.choice([-1, 1])
+vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Initialisation des scores
 score_joueur1 = 0
 score_joueur2 = 0
 
-# Police d'affichage des scores
+# Police d'affichage des scores et autres informations
 font = pygame.font.Font(None, 36)
 
 # Hyperparamètres Double DQN
 alpha = 0.001
 gamma = 0.99
 epsilon = 0.9
-epsilon_decay = 0.995
+epsilon_decay = 0.975
 epsilon_min = 0.1
 batch_size = 128
 memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 200
+max_episodes = 500
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
@@ -141,7 +141,7 @@ def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
-    vitesse_balle_y = 12 * random.choice([-1, 1])
+    vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Boucle principale
 frames = 0
@@ -152,10 +152,10 @@ while episode_count < max_episodes:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            # Enregistrer le modèle avant de quitter
+            torch.save(policy_net.state_dict(), '5_Ddqn_continuous.pth')
             pygame.quit()
             sys.exit()
-
-    epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
     state = obtenir_etat_continu()
 
@@ -220,6 +220,10 @@ while episode_count < max_episodes:
     score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
     fenetre.blit(score_text, (largeur // 2 - 100, 10))
 
+    # Affichage de l'épisode et de la valeur epsilon en cours
+    episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
+    fenetre.blit(episode_text, (10, hauteur - 40))
+
     pygame.display.flip()
     pygame.time.Clock().tick(60)
 
@@ -228,6 +232,12 @@ while episode_count < max_episodes:
         episode_duration = time.time() - start_time
         for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
             csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error])
+
+        # Decay sur epsilon à la fin de l'épisode
+        epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        
+# Enregistrer le modèle après l'entraînement
+torch.save(policy_net.state_dict(), '5_Ddqn_continuous.pth')
 
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()

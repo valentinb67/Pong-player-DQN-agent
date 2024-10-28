@@ -30,7 +30,7 @@ balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
 
 # Vitesses initiales de la balle
 vitesse_balle_x = -12
-vitesse_balle_y = 12 * random.choice([-1, 1])
+vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Initialisation des scores
 score_joueur1 = 0
@@ -50,7 +50,7 @@ memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 200
+max_episodes = 500
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
@@ -59,7 +59,7 @@ memory = deque(maxlen=memory_size)
 nb_actions = 3  # UP, DOWN, STAY
 
 # Variables pour l'enregistrement des données d'entraînement
-csv_file = open('pong_double_dqn_continuous_training_log.csv', mode='w', newline='')
+csv_file = open('pong_double_dqn_discret_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error'])
 
@@ -140,7 +140,7 @@ def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
-    vitesse_balle_y = 12 * random.choice([-1, 1])
+    vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Boucle principale
 frames = 0
@@ -151,6 +151,9 @@ while episode_count < max_episodes:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            # Enregistrer le modèle avant de quitter
+            torch.save(policy_net.state_dict(), '4_Ddqn_discret.pth')
+            csv_file.close()
             pygame.quit()
             sys.exit()
 
@@ -217,6 +220,10 @@ while episode_count < max_episodes:
     score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
     fenetre.blit(score_text, (largeur // 2 - 100, 10))
 
+    # Affichage de l'épisode et de la valeur epsilon en cours
+    episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
+    fenetre.blit(episode_text, (10, hauteur - 40))
+
     pygame.display.flip()
     pygame.time.Clock().tick(60)
 
@@ -228,6 +235,9 @@ while episode_count < max_episodes:
 
         # Mise à jour d'epsilon à la fin de chaque épisode
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
+
+# Enregistrer le modèle à la fin de l'entraînement
+torch.save(policy_net.state_dict(), '4_Ddqn_discret.pth')
 
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()

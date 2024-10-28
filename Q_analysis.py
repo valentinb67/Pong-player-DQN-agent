@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Lire le fichier CSV
-df = pd.read_csv('pong_dqn_discret_training_log.csv')
+df = pd.read_csv('pong_double_dqn_continuous_training_log.csv')
 
 # Créer des graphiques pour visualiser les données
 fig, axs = plt.subplots(3, 1, figsize=(10, 10))

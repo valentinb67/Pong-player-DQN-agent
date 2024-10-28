@@ -30,7 +30,7 @@ balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
 
 # Vitesses initiales de la balle
 vitesse_balle_x = -12
-vitesse_balle_y = 12 * random.choice([-1, 1])
+vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Initialisation des scores
 score_joueur1 = 0
@@ -50,7 +50,7 @@ memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 200
+max_episodes = 500
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
@@ -139,7 +139,7 @@ def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
-    vitesse_balle_y = 12 * random.choice([-1, 1])
+    vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Boucle principale
 frames = 0
@@ -150,6 +150,7 @@ while episode_count < max_episodes:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            torch.save(policy_net.state_dict(), '3_dqn_continuous.pth')  # Enregistrer le modèle avant de quitter
             pygame.quit()
             sys.exit()
 
@@ -215,6 +216,10 @@ while episode_count < max_episodes:
     # Affichage des scores
     score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
     fenetre.blit(score_text, (largeur // 2 - 100, 10))
+    
+    # Affichage de l'épisode et de la valeur epsilon en cours
+    episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
+    fenetre.blit(episode_text, (10, hauteur - 40))
 
     pygame.display.flip()
     pygame.time.Clock().tick(60)
@@ -228,6 +233,9 @@ while episode_count < max_episodes:
         # Mise à jour d'epsilon à la fin de chaque épisode
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         
+# Sauvegarder le modèle après l'entraînement
+torch.save(policy_net.state_dict(), '3_dqn_continuous.pth')
+
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
 

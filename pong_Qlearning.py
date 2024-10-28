@@ -1,3 +1,4 @@
+import torch
 import pygame
 import sys
 import random
@@ -24,7 +25,7 @@ balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)  # Balle au ce
 
 # Vitesses initiales de la balle
 vitesse_balle_x = -12
-vitesse_balle_y = 12 * random.choice([-1, 1])
+vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Variables pour les scores
 score1 = 0
@@ -36,7 +37,7 @@ compteur_session = 0  # Compteur de touches pour la session actuelle
 
 # Statistiques d'entraînement
 episode_count = 0
-max_episodes = 2
+max_episodes = 500
 epsilon_hist = [] 
 reward_cumule_hist = []
 reward_cumule_episode = 0 
@@ -96,7 +97,14 @@ def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
-    vitesse_balle_y = 12 * random.choice([-1, 1])
+    vitesse_balle_y = 6 * random.choice([-1, 1])
+
+# Charger la Q-table si elle existe
+#try:
+#    q_table = torch.load('1_q_table.pth')
+#    print("Q-table chargée avec succès.")
+#except FileNotFoundError:
+#    print("Aucune Q-table trouvée, création d'une nouvelle.")
 
 # Boucle principale du jeu
 while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
@@ -107,6 +115,8 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             csv_file.close()
+            torch.save(q_table, '1_q_table.pth')
+            print("Q-table enregistrée avec succès.")
             pygame.quit()
             sys.exit()
 
@@ -140,8 +150,6 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
     if balle.colliderect(raquette1):
         vitesse_balle_x = -vitesse_balle_x
         balle.left = raquette1.right  # Déplacer la balle juste à droite de la raquette
-        compteur_global += 1
-        compteur_session += 1
         
     # Collision avec la raquette 2
     if balle.colliderect(raquette2):
@@ -208,19 +216,9 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
     fenetre.blit(texte1, (largeur // 4, 20))
     fenetre.blit(texte2, (3 * largeur // 4 - 20, 20))
 
-    # Affichage des compteurs
-    texte_compteur_global = police.render(f"Touches globales: {compteur_global}", True, blanc)
-    texte_compteur_session = police.render(f"Touches session: {compteur_session}", True, blanc)
-    fenetre.blit(texte_compteur_global, (20, hauteur - 60))
-    fenetre.blit(texte_compteur_session, (20, hauteur - 30))
-
-    # Affichage des statistiques d'entraînement
-    texte_episodes = police.render(f"Épisodes: {episode_count}", True, blanc)
-    texte_epsilon = police.render(f"Epsilon: {epsilon:.2f}", True, blanc)
-    texte_reward = police.render(f"Récompense: {episode_reward}", True, blanc)
-    fenetre.blit(texte_episodes, (largeur - 150, hauteur - 60))
-    fenetre.blit(texte_epsilon, (largeur - 150, hauteur - 40))
-    fenetre.blit(texte_reward, (largeur - 150, hauteur - 20))
+    # Affichage de l'épisode et de la valeur epsilon en cours
+    episode_text = police.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
+    fenetre.blit(episode_text, (10, hauteur - 40))
 
     # Rafraîchir l'écran
     pygame.display.flip()
@@ -230,4 +228,7 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
 
 # Fermer le fichier CSV après la fin de l'entraînement
 csv_file.close()
+torch.save(q_table, '1_q_table.pth')
+print("Q-table enregistrée avec succès.")
 pygame.quit()
+

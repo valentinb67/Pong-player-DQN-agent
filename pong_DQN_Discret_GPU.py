@@ -31,7 +31,7 @@ balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
 
 # Vitesses initiales de la balle
 vitesse_balle_x = -12
-vitesse_balle_y = 12 * random.choice([-1, 1])
+vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Initialisation des scores
 score_joueur1 = 0
@@ -51,7 +51,7 @@ memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 10
+max_episodes = 500
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
@@ -63,7 +63,7 @@ nb_actions = len(actions)
 # Variables pour l'enregistrement des données d'entraînement
 csv_file = open('pong_dqn_discret_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error', 'Touches Joueur 2', 'Touches Cumulees Joueur 2'])
+csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error', 'compteur_session','compteur_global'])
 
 # Modèle de réseau de neurones pour DQN
 class DQN(nn.Module):
@@ -144,12 +144,12 @@ def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
-    vitesse_balle_y = 12 * random.choice([-1, 1])
+    vitesse_balle_y = 6 * random.choice([-1, 1])
 
 # Boucle principale
 frames = 0
-touches_joueur2 = 0
-touches_cumulees_joueur2 = 0
+compteur_session = 0
+compteur_global = 0
 
 while episode_count < max_episodes:
     episode_reward = 0
@@ -160,6 +160,8 @@ while episode_count < max_episodes:
     while not done:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                torch.save(policy_net.state_dict(), '2_dqn_discret.pth')
+                csv_file.close()
                 pygame.quit()
                 sys.exit()
 
@@ -191,8 +193,8 @@ while episode_count < max_episodes:
             vitesse_balle_x = -vitesse_balle_x
             balle.right = raquette2.left
             reward = 1
-            touches_joueur2 += 1
-            touches_cumulees_joueur2 += 1
+            compteur_session += 1
+            compteur_global += 1
 
         if balle.left <= 0:
             score_joueur2 += 1  # Mise à jour du score du joueur 2
@@ -228,6 +230,14 @@ while episode_count < max_episodes:
         # Affichage des scores
         score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
         fenetre.blit(score_text, (largeur // 2 - 100, 10))
+        
+            # Affichage des scores
+        score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
+        fenetre.blit(score_text, (largeur // 2 - 100, 10))
+
+        # Affichage de l'épisode et de la valeur epsilon en cours
+        episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
+        fenetre.blit(episode_text, (10, hauteur - 40))
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
@@ -235,16 +245,18 @@ while episode_count < max_episodes:
     # Si l'épisode est terminé, on enregistre les informations dans le CSV
     episode_duration = time.time() - start_time
     for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
-        csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error, touches_joueur2, touches_cumulees_joueur2])
+        csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration,
+                             episode_loss, true_value, value_estimate, td_error, compteur_session,
+                             compteur_global])
 
     # Mise à jour d'epsilon à la fin de chaque épisode
     epsilon = max(epsilon_min, epsilon * epsilon_decay)
     
     # Réinitialisation des touches du joueur 2 pour le prochain épisode
-    touches_joueur2 = 0
+    compteur_session = 0
         
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
-
+torch.save(policy_net.state_dict(), '2_dqn_discret.pth')
 pygame.quit()
 sys.exit()
