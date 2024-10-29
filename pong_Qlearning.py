@@ -2,7 +2,7 @@ import pygame
 import sys
 import random
 import numpy as np
-import cv2  # Pour l'enregistrement de la vidéo
+import cv2
 from collections import defaultdict
 import csv
 import time
@@ -53,7 +53,7 @@ epsilon_min = 0.1  # Valeur minimale pour epsilon
 # CSV File for logging
 csv_file = open('q_learning_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Episode', 'Epsilon', 'Touches Session', 'Touches Globales', 'Reward'])
+csv_writer.writerow(['Episode', 'Epsilon', 'Touches Session', 'Touches Globales', 'Reward', 'TD Error', 'True Value', 'Estimate Value', 'Loss'])
 
 # Police de texte
 police = pygame.font.Font(None, 36)
@@ -82,11 +82,29 @@ def choisir_action(state):
     else:
         return actions[np.argmax(q_table[state])]
 
-# Fonction de mise à jour Q-Learning
+# Fonction de mise à jour Q-Learning avec retour des valeurs pour enregistrement
 def mise_a_jour_q_table(etat, action, reward, etat_suivant):
     action_idx = actions.index(action)
+    
+    # Valeur estimée actuelle de Q
+    estimate_value = q_table[etat][action_idx]
+    
+    # Meilleure estimation pour l'état suivant
     meilleure_action_suivante = np.max(q_table[etat_suivant])
-    q_table[etat][action_idx] = q_table[etat][action_idx] + alpha * (reward + gamma * meilleure_action_suivante - q_table[etat][action_idx])
+    
+    # Valeur attendue pour Q
+    true_value = reward + gamma * meilleure_action_suivante
+    
+    # Calcul de l'erreur TD
+    td_error = true_value - estimate_value
+    
+    # Mise à jour de la Q-Table
+    q_table[etat][action_idx] = estimate_value + alpha * td_error
+    
+    # Calcul de la perte
+    loss = (1/2)*td_error ** 2
+    
+    return td_error, true_value, estimate_value, loss
 
 # Fonction pour réinitialiser l'environnement après chaque épisode
 def reinitialiser_jeu():
@@ -94,6 +112,9 @@ def reinitialiser_jeu():
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
     vitesse_balle_y = 6 * random.choice([-1, 1])
+
+# Initialiser la récompense à 0 au début de chaque boucle
+reward = 0
 
 # Boucle principale du jeu
 while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
@@ -104,9 +125,6 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
             video_writer.release()
             pygame.quit()
             sys.exit()
-
-    # Initialiser la récompense à 0 au début de chaque boucle
-    reward = 0
 
     # Mouvement de la raquette du joueur 1 pour tracker la balle
     raquette1.y = balle.y
@@ -140,34 +158,48 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
     if balle.colliderect(raquette2):
         vitesse_balle_x = -vitesse_balle_x
         balle.right = raquette2.left
-        reward = 1
+        reward += 1
         compteur_global += 1
         compteur_session += 1
 
     # Balle sortie du jeu (perte de point)
     if balle.left <= 0:  # Le joueur ordinateur marque un point
         score2 += 1
-        reward = -10
+        reward += -10
         episode_count += 1  # Fin de l'épisode
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         reinitialiser_jeu()
+        
+        # Enregistrement dans le CSV avec valeurs de TD et Loss à 0 (car fin d'épisode)
+        csv_writer.writerow([episode_count, epsilon, compteur_session, compteur_global, reward, 0, 0, 0, 0])
+        csv_file.flush()
         compteur_session = 0
+        reward = 0
         continue  # Passer au prochain épisode
 
     elif balle.right >= largeur:  # Le joueur humain marque un point
         score1 += 1
-        reward = -10
+        reward += -10
         episode_count += 1
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         reinitialiser_jeu()
+        
+        # Enregistrement dans le CSV avec valeurs de TD et Loss à 0 (car fin d'épisode)
+        csv_writer.writerow([episode_count, epsilon, compteur_session, compteur_global, reward, 0, 0, 0, 0])
+        csv_file.flush()
         compteur_session = 0
+        reward = 0
         continue
 
     # Obtenir le nouvel état
     etat_suivant = obtenir_etat_discret()
 
-    # Mise à jour de la Q-Table
-    mise_a_jour_q_table(etat, action, reward, etat_suivant)
+    # Mise à jour de la Q-Table et récupération des valeurs TD Error, True Value, Estimate Value, Loss
+    td_error, true_value, estimate_value, loss = mise_a_jour_q_table(etat, action, reward, etat_suivant)
+
+    # Enregistrement des données dans le CSV
+    csv_writer.writerow([episode_count, epsilon, compteur_session, compteur_global, reward, td_error, true_value, estimate_value, loss])
+    csv_file.flush()
 
     # Effacer l'écran
     fenetre.fill((0, 0, 0))
@@ -203,3 +235,7 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
 csv_file.close()
 video_writer.release()
 pygame.quit()
+
+
+
+

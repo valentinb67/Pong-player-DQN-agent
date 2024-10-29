@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Lire le fichier CSV
-df = pd.read_csv('pong_double_dqn_continuous_training_log.csv')
+df = pd.read_csv('q_learning_log.csv')
 
 # Créer des graphiques pour visualiser les données
 fig, axs = plt.subplots(3, 1, figsize=(10, 10))
@@ -14,13 +14,13 @@ axs[0].set_xlabel('Épisode')
 axs[0].set_ylabel('Epsilon')
 
 # Graphique 2: Loss (Perte)
-axs[1].plot(df['Episode'], df['Loss'], color='red')
+axs[1].plot(df['Episode'], df['TD Error'], color='red')
 axs[1].set_title('Évolution de la Perte')
 axs[1].set_xlabel('Épisode')
 axs[1].set_ylabel('Loss')
 
 # Graphique 3: Temps de l'épisode
-axs[2].plot(df['Episode'], df['Episode Duration'], color='purple')
+#axs[2].plot(df['Episode'], df['Episode Duration'], color='purple')
 axs[2].set_title("Évolution du Temps de l'Épisode")
 axs[2].set_xlabel('Épisode')
 axs[2].set_ylabel('Durée de l\'épisode')
