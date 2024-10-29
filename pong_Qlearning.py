@@ -1,11 +1,11 @@
-import torch
 import pygame
 import sys
 import random
 import numpy as np
+import cv2  # Pour l'enregistrement de la vidéo
 from collections import defaultdict
 import csv
-import time  # Pour mesurer la durée de l'épisode
+import time
 
 # Initialisation de pygame
 pygame.init()
@@ -38,9 +38,6 @@ compteur_session = 0  # Compteur de touches pour la session actuelle
 # Statistiques d'entraînement
 episode_count = 0
 max_episodes = 500
-epsilon_hist = [] 
-reward_cumule_hist = []
-reward_cumule_episode = 0 
 
 # Hyperparamètres du Q-Learning
 actions = ["UP", "DOWN", "STAY"]
@@ -56,10 +53,15 @@ epsilon_min = 0.1  # Valeur minimale pour epsilon
 # CSV File for logging
 csv_file = open('q_learning_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Episode', 'Epsilon', 'Touches Session', 'Touches Globales', 'Reward', 'Episode Reward', 'Episode Duration', 'Episode Loss', 'True Value', 'Value Estimate', 'TD Error'])
+csv_writer.writerow(['Episode', 'Epsilon', 'Touches Session', 'Touches Globales', 'Reward'])
 
 # Police de texte
 police = pygame.font.Font(None, 36)
+
+# Initialisation pour l'enregistrement vidéo
+fps = 60
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+video_writer = cv2.VideoWriter('1_q_table_record.avi', fourcc, fps, (largeur, hauteur))
 
 # Fonction pour discrétiser l'état
 def discretiser(val, intervalle, nb_divisions):
@@ -86,12 +88,6 @@ def mise_a_jour_q_table(etat, action, reward, etat_suivant):
     meilleure_action_suivante = np.max(q_table[etat_suivant])
     q_table[etat][action_idx] = q_table[etat][action_idx] + alpha * (reward + gamma * meilleure_action_suivante - q_table[etat][action_idx])
 
-    # Calcul des valeurs pour le CSV (arbitraires pour illustration)
-    true_value = reward + gamma * meilleure_action_suivante
-    value_estimate = q_table[etat][action_idx]
-    td_error = true_value - value_estimate
-    return true_value, value_estimate, td_error
-
 # Fonction pour réinitialiser l'environnement après chaque épisode
 def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
@@ -99,24 +95,13 @@ def reinitialiser_jeu():
     vitesse_balle_x = -12
     vitesse_balle_y = 6 * random.choice([-1, 1])
 
-# Charger la Q-table si elle existe
-#try:
-#    q_table = torch.load('1_q_table.pth')
-#    print("Q-table chargée avec succès.")
-#except FileNotFoundError:
-#    print("Aucune Q-table trouvée, création d'une nouvelle.")
-
 # Boucle principale du jeu
 while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
-    start_time = time.time()  # Début de l'épisode
-    episode_reward = 0  # Cumul de la récompense pour l'épisode
-    episode_loss = 0  # Suivi de la perte totale pour l'épisode
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             csv_file.close()
-            torch.save(q_table, '1_q_table.pth')
             print("Q-table enregistrée avec succès.")
+            video_writer.release()
             pygame.quit()
             sys.exit()
 
@@ -156,51 +141,33 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
         vitesse_balle_x = -vitesse_balle_x
         balle.right = raquette2.left
         reward = 1
-        episode_reward += reward
         compteur_global += 1
         compteur_session += 1
 
     # Balle sortie du jeu (perte de point)
-    if balle.left <= 0 or balle.right >= largeur:  # Si la balle sort des limites
-        if balle.left <= 0:  # Perte pour le joueur
-            score2 += 1
-            reward = -10
-        elif balle.right >= largeur:  # Perte pour l'ordinateur
-            score1 += 1
-            reward = -10
-
-        episode_reward += reward
+    if balle.left <= 0:  # Le joueur ordinateur marque un point
+        score2 += 1
+        reward = -10
         episode_count += 1  # Fin de l'épisode
-        episode_duration = time.time() - start_time  # Durée de l'épisode
-
-        # Décroissance de epsilon après chaque épisode
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
-
-        # Obtenir l'état suivant après la fin de l'épisode
-        etat_suivant = obtenir_etat_discret()
-
-        # Mise à jour de la Q-Table et calcul des valeurs pour le CSV
-        true_value, value_estimate, td_error = mise_a_jour_q_table(etat, action, reward, etat_suivant)
-
-        # Écrire les informations de l'épisode dans le fichier CSV
-        csv_writer.writerow([
-            episode_count, epsilon, compteur_session, compteur_global, reward, episode_reward,
-            episode_duration, episode_loss, true_value, value_estimate, td_error
-        ])
-
-        # Réinitialiser les compteurs et l'environnement pour le nouvel épisode
         reinitialiser_jeu()
-        reward_cumule_episode = 0  # Réinitialiser les récompenses cumulées pour le prochain épisode
-        compteur_session = 0  # Réinitialiser les touches de la session uniquement après la fin de l'épisode
+        compteur_session = 0
+        continue  # Passer au prochain épisode
 
-        continue  # Passer au prochain épisode sans arrêter le jeu
+    elif balle.right >= largeur:  # Le joueur humain marque un point
+        score1 += 1
+        reward = -10
+        episode_count += 1
+        epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        reinitialiser_jeu()
+        compteur_session = 0
+        continue
 
     # Obtenir le nouvel état
     etat_suivant = obtenir_etat_discret()
 
-    # Mise à jour de la Q-Table et collecte des valeurs de perte
-    true_value, value_estimate, td_error = mise_a_jour_q_table(etat, action, reward, etat_suivant)
-    episode_loss += abs(td_error)  # Cumul de la perte pour l'épisode
+    # Mise à jour de la Q-Table
+    mise_a_jour_q_table(etat, action, reward, etat_suivant)
 
     # Effacer l'écran
     fenetre.fill((0, 0, 0))
@@ -223,12 +190,16 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
     # Rafraîchir l'écran
     pygame.display.flip()
 
+    # Capture de l'écran pour l'enregistrement vidéo
+    frame = pygame.surfarray.array3d(pygame.display.get_surface())
+    frame = cv2.transpose(frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    video_writer.write(frame)
+
     # Limite de rafraîchissement
-    pygame.time.Clock().tick(60)
+    pygame.time.Clock().tick(fps)
 
 # Fermer le fichier CSV après la fin de l'entraînement
 csv_file.close()
-torch.save(q_table, '1_q_table.pth')
-print("Q-table enregistrée avec succès.")
+video_writer.release()
 pygame.quit()
-
