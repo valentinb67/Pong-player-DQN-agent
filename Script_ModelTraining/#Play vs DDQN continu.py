@@ -51,7 +51,7 @@ class DQN(nn.Module):
 
 # Charger le modèle entraîné
 policy_net = DQN().to(device)
-policy_net.load_state_dict(torch.load('5_Ddqn_continuous.pth', map_location=device))
+policy_net.load_state_dict(torch.load('ModelsPTH/3.5_Ddqn_continuous.pth', map_location=device))
 policy_net.eval()
 
 def obtenir_etat_continu():

@@ -59,7 +59,7 @@ memory = deque(maxlen=memory_size)
 nb_actions = 3  # UP, DOWN, STAY
 
 # Variables pour l'enregistrement des données d'entraînement
-csv_file = open('pong_double_dqn_discret_training_log.csv', mode='w', newline='')
+csv_file = open('LearningData/3_pong_double_dqn_discret_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error'])
 
@@ -86,12 +86,15 @@ target_net.eval()
 optimizer = optim.Adam(policy_net.parameters(), lr=alpha)
 loss_fn = nn.MSELoss()
 
-def obtenir_etat_continu():
-    etat_x = balle.x / largeur
-    etat_y = balle.y / hauteur
-    etat_vx = vitesse_balle_x / 12.0
-    etat_vy = vitesse_balle_y / 12.0
-    raquette_pos = raquette2.y / hauteur
+def discretiser(val, intervalle, nb_divisions):
+    return min(nb_divisions - 1, max(0, int(val / intervalle * nb_divisions)))
+
+def obtenir_etat_discret():
+    etat_x = discretiser(balle.x, largeur, 10)  # 30-40 segments pour la position en x
+    etat_y = discretiser(balle.y, hauteur, 10)  # 30-40 segments pour la position en y
+    etat_vx = -1 if vitesse_balle_x < -2 else (1 if vitesse_balle_x > 2 else 0)  # -1, 0, 1 pour la vitesse x
+    etat_vy = -1 if vitesse_balle_y < -2 else (1 if vitesse_balle_y > 2 else 0)  # -1, 0, 1 pour la vitesse y
+    raquette_pos = discretiser(raquette2.y, hauteur, 6)  # 20-30 segments pour la raquette
     return np.array([etat_x, etat_y, etat_vx, etat_vy, raquette_pos], dtype=np.float32)
 
 def choisir_action(state):
@@ -152,12 +155,12 @@ while episode_count < max_episodes:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             # Enregistrer le modèle avant de quitter
-            torch.save(policy_net.state_dict(), '4_Ddqn_discret.pth')
+            torch.save(policy_net.state_dict(), 'ModelsPTH/3_Ddqn_discret.pth')
             csv_file.close()
             pygame.quit()
             sys.exit()
 
-    state = obtenir_etat_continu()
+    state = obtenir_etat_discret()
 
     raquette1.y = balle.y
     
@@ -201,7 +204,7 @@ while episode_count < max_episodes:
 
     episode_reward += reward  # Ajout de la récompense au total de l'épisode
 
-    next_state = obtenir_etat_continu()
+    next_state = obtenir_etat_discret()
     stocker_transition(state, action_idx, reward, next_state, done)
     loss, true_values, value_estimates, td_errors = entrainer_dqn()
     episode_loss += loss  # Ajout de la perte pour chaque batch
@@ -237,7 +240,7 @@ while episode_count < max_episodes:
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
 
 # Enregistrer le modèle à la fin de l'entraînement
-torch.save(policy_net.state_dict(), '4_Ddqn_discret.pth')
+torch.save(policy_net.state_dict(), 'ModelsPTH/3.5_Ddqn_discret.pth')
 
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()

@@ -51,7 +51,7 @@ memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 500
+max_episodes = 100
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
@@ -61,9 +61,9 @@ actions = ["UP", "DOWN", "STAY"]
 nb_actions = len(actions)
 
 # Variables pour l'enregistrement des données d'entraînement
-csv_file = open('pong_dqn_discret_training_log.csv', mode='w', newline='')
+csv_file = open('LearningData/2_pong_dqn_discret_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error', 'compteur_session','compteur_global'])
+csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error'])
 
 # Modèle de réseau de neurones pour DQN
 class DQN(nn.Module):
@@ -92,11 +92,11 @@ def discretiser(val, intervalle, nb_divisions):
     return min(nb_divisions - 1, max(0, int(val / intervalle * nb_divisions)))
 
 def obtenir_etat_discret():
-    etat_x = discretiser(balle.x, largeur, 20)
-    etat_y = discretiser(balle.y, hauteur, 20)
-    etat_vx = 0 if vitesse_balle_x < 0 else 1
-    etat_vy = 0 if vitesse_balle_y < 0 else 1
-    raquette_pos = discretiser(raquette2.y, hauteur, 20)
+    etat_x = discretiser(balle.x, largeur, 15)  # 30-40 segments pour la position en x
+    etat_y = discretiser(balle.y, hauteur, 85)  # 30-40 segments pour la position en y
+    etat_vx = -1 if vitesse_balle_x < -2 else (1 if vitesse_balle_x > 2 else 0)  # -1, 0, 1 pour la vitesse x
+    etat_vy = -1 if vitesse_balle_y < -2 else (1 if vitesse_balle_y > 2 else 0)  # -1, 0, 1 pour la vitesse y
+    raquette_pos = discretiser(raquette2.y, hauteur, 55)  # 20-30 segments pour la raquette
     return np.array([etat_x, etat_y, etat_vx, etat_vy, raquette_pos], dtype=np.float32)
 
 def choisir_action(state):
@@ -148,8 +148,6 @@ def reinitialiser_jeu():
 
 # Boucle principale
 frames = 0
-compteur_session = 0
-compteur_global = 0
 
 while episode_count < max_episodes:
     episode_reward = 0
@@ -160,7 +158,7 @@ while episode_count < max_episodes:
     while not done:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                torch.save(policy_net.state_dict(), '2_dqn_discret.pth')
+                torch.save(policy_net.state_dict(), 'ModelsPTH/2_dqn_discret.pth')
                 csv_file.close()
                 pygame.quit()
                 sys.exit()
@@ -193,8 +191,6 @@ while episode_count < max_episodes:
             vitesse_balle_x = -vitesse_balle_x
             balle.right = raquette2.left
             reward = 1
-            compteur_session += 1
-            compteur_global += 1
 
         if balle.left <= 0:
             score_joueur2 += 1  # Mise à jour du score du joueur 2
@@ -246,17 +242,13 @@ while episode_count < max_episodes:
     episode_duration = time.time() - start_time
     for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
         csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration,
-                             episode_loss, true_value, value_estimate, td_error, compteur_session,
-                             compteur_global])
+                             episode_loss, true_value, value_estimate, td_error])
 
     # Mise à jour d'epsilon à la fin de chaque épisode
     epsilon = max(epsilon_min, epsilon * epsilon_decay)
-    
-    # Réinitialisation des touches du joueur 2 pour le prochain épisode
-    compteur_session = 0
         
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
-torch.save(policy_net.state_dict(), '2_dqn_discret.pth')
+torch.save(policy_net.state_dict(), 'ModelsPTH/2_dqn_discret.pth')
 pygame.quit()
 sys.exit()

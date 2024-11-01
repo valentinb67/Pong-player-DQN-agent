@@ -6,6 +6,7 @@ from collections import deque
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import cv2
 import csv
 import time  # Pour mesurer la durée de l'épisode
 
@@ -39,6 +40,11 @@ score_joueur2 = 0
 # Police d'affichage des scores et autres informations
 font = pygame.font.Font(None, 36)
 
+# Initialisation pour l'enregistrement vidéo
+fps = 60
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+video_writer = cv2.VideoWriter('Records/3.5_Ddqn_record.avi', fourcc, fps, (largeur, hauteur))
+
 # Hyperparamètres Double DQN
 alpha = 0.001
 gamma = 0.99
@@ -59,7 +65,7 @@ memory = deque(maxlen=memory_size)
 nb_actions = 3  # UP, DOWN, STAY
 
 # Variables pour l'enregistrement des données d'entraînement
-csv_file = open('pong_double_dqn_continuous_training_log.csv', mode='w', newline='')
+csv_file = open('LearningData/3.5_pong_double_dqn_continuous_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error'])
 
@@ -153,7 +159,8 @@ while episode_count < max_episodes:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             # Enregistrer le modèle avant de quitter
-            torch.save(policy_net.state_dict(), '5_Ddqn_continuous.pth')
+            torch.save(policy_net.state_dict(), 'ModelsPTH/5_Ddqn_continuous.pth')
+            video_writer.release()
             pygame.quit()
             sys.exit()
 
@@ -226,6 +233,15 @@ while episode_count < max_episodes:
 
     pygame.display.flip()
     pygame.time.Clock().tick(60)
+    
+    # Capture de l'écran pour l'enregistrement vidéo
+    frame = pygame.surfarray.array3d(pygame.display.get_surface())
+    frame = cv2.transpose(frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    video_writer.write(frame)
+
+    # Limite de rafraîchissement
+    pygame.time.Clock().tick(fps)
 
     # Si l'épisode est terminé, on enregistre les informations dans le CSV
     if done:
@@ -237,10 +253,10 @@ while episode_count < max_episodes:
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
         
 # Enregistrer le modèle après l'entraînement
-torch.save(policy_net.state_dict(), '5_Ddqn_continuous.pth')
+torch.save(policy_net.state_dict(), 'ModelsPTH/5_Ddqn_continuous.pth')
 
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
-
+video_writer.release()
 pygame.quit()
 sys.exit()

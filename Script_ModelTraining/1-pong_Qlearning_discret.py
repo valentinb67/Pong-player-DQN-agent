@@ -42,16 +42,16 @@ max_episodes = 500
 # Hyperparamètres du Q-Learning
 actions = ["UP", "DOWN", "STAY"]
 q_table = defaultdict(lambda: np.zeros(len(actions)))
-alpha = 0.7  
-gamma = 0.7  
+alpha = 0.1 #Car les récompenses sont rare  
+gamma = 0.99 
 
 # Paramètres pour l'exploration epsilon-greedy
 epsilon = 0.9  # Valeur initiale de epsilon
 epsilon_decay = 0.975  # Facteur de décroissance de epsilon
-epsilon_min = 0.1  # Valeur minimale pour epsilon
+epsilon_min = 0.9  # Valeur minimale pour epsilon
 
 # CSV File for logging
-csv_file = open('q_learning_log.csv', mode='w', newline='')
+csv_file = open('LearningData/1_q_learning_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Episode', 'Epsilon', 'Touches Session', 'Touches Globales', 'Reward', 'TD Error', 'True Value', 'Estimate Value', 'Loss'])
 
@@ -61,18 +61,18 @@ police = pygame.font.Font(None, 36)
 # Initialisation pour l'enregistrement vidéo
 fps = 60
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-video_writer = cv2.VideoWriter('1_q_table_record.avi', fourcc, fps, (largeur, hauteur))
+video_writer = cv2.VideoWriter('Records/1_q_table_record.avi', fourcc, fps, (largeur, hauteur))
 
 # Fonction pour discrétiser l'état
 def discretiser(val, intervalle, nb_divisions):
     return min(nb_divisions - 1, max(0, int(val / intervalle * nb_divisions)))
 
 def obtenir_etat_discret():
-    etat_x = discretiser(balle.x, largeur, 20)
-    etat_y = discretiser(balle.y, hauteur, 20)
+    etat_x = discretiser(balle.x, largeur, 5)
+    etat_y = discretiser(balle.y, hauteur, 5)
     etat_vx = 0 if vitesse_balle_x < 0 else 1
     etat_vy = 0 if vitesse_balle_y < 0 else 1
-    raquette_pos = discretiser(raquette2.y, hauteur, 20)
+    raquette_pos = discretiser(raquette2.y, hauteur, 3)
     return (etat_x, etat_y, etat_vx, etat_vy, raquette_pos)
 
 # Fonction pour choisir une action (epsilon-greedy)
