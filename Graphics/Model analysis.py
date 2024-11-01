@@ -2,12 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Lire les fichiers CSV
-df_q_learning = pd.read_csv('q_learning_log.csv')
-df_q_learning_test = pd.read_csv('q_learning_log_test.csv')
-df_dqn_discret = pd.read_csv('pong_dqn_discret_training_log.csv')
-df_dqn_continu = pd.read_csv('pong_dqn_continuous_training_log.csv')
-df_Ddqn_discret = pd.read_csv('pong_double_dqn_discret_training_log.csv')
-df_Ddqn_continu = pd.read_csv('pong_double_dqn_continuous_training_log.csv')
+
+df_q_learning_test = pd.read_csv('LearningData/q_learning_log_test.csv')
+df_q_discret = pd.read_csv('LearningData/1_q_learning_log.csv')
+df_q_continuous = pd.read_csv('LearningData/1.5_q_learning_continuous_log.csv')
+df_dqn_discret = pd.read_csv('LearningData/2_pong_dqn_discret_training_log.csv')
+df_dqn_continu = pd.read_csv('LearningData/2.5_pong_dqn_continuous_training_log.csv')
+df_Ddqn_discret = pd.read_csv('LearningData/3_pong_double_dqn_discret_training_log.csv')
+df_Ddqn_continu = pd.read_csv('LearningData/3.5_pong_double_dqn_continuous_training_log.csv')
 
 # Liste des DataFrames et leurs étiquettes pour les légendes
 dataframes = [
