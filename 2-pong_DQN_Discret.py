@@ -14,7 +14,7 @@ print(torch.cuda.device_count())
 pygame.init()
 
 # Vérification de la disponibilité de CUDA
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Dimensions de la fenêtre du jeu
 largeur, hauteur = 640, 480
