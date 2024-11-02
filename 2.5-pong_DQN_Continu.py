@@ -50,7 +50,7 @@ memory_size = 10000
 target_update = 10
 
 # Nbr d'épisodes
-max_episodes = 500
+max_episodes = 100
 episode_count = 0
 
 memory = deque(maxlen=memory_size)
