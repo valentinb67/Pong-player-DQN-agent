@@ -239,10 +239,10 @@ while episode_count < max_episodes:
         pygame.time.Clock().tick(60)
 
     # Si l'épisode est terminé, on enregistre les informations dans le CSV
-    episode_duration = time.time() - start_time
-    for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
-        csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration,
-                             episode_loss, true_value, value_estimate, td_error])
+    if done:
+        episode_duration = time.time() - start_time
+        for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
+            csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error])
 
     # Mise à jour d'epsilon à la fin de chaque épisode
     epsilon = max(epsilon_min, epsilon * epsilon_decay)
