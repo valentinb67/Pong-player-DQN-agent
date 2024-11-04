@@ -13,7 +13,7 @@ Génère un état discret du jeu en utilisant la fonction discretiser. Elle réc
 **choisir_action(*state*):**
 Implémente la stratégie epsilon-greedy pour choisir une action basée sur l’état actuel. Elle retourne une action aléatoire avec une probabilité epsilon pour encourager l'exploration, ou l’action avec la meilleure estimation de récompense selon la q_table pour l’exploitation.
 
-**mise_a_jour_q_table(*etat*, *action*, reward, etat_suivant):**
+**mise_a_jour_q_table(*etat*, *action*, *reward*, *etat_suivant*):**
 Met à jour la Q-table en appliquant l'algorithme de Q-learning. Elle utilise l'état actuel, l'action prise, la récompense obtenue, et l'état suivant pour ajuster la valeur associée dans la Q-table. Elle retourne aussi des valeurs comme l’erreur de temporal difference (*td_error*), la valeur attendue (*true_value*), la valeur estimée (*estimate_value*), et la perte (*loss*) pour enregistrement.
 
 **reinitialiser_jeu():**
@@ -22,7 +22,7 @@ Réinitialise les positions de la balle et sa vitesse pour le début d’un nouv
 **obtenir_etat_continu():**
 Crée une représentation continue de l’état en normalisant les positions de la balle et de la raquette, ainsi que les vitesses de la balle. Elle retourne un tuple contenant ces valeurs continues, qui peuvent être utilisées comme état pour la Q-table. Cette version continue de l'état offre une alternative à la version discrète précédemment utilisée, permettant potentiellement une approche plus fine dans l’apprentissage.
 
-**stocker_transition(state, action, reward, next_state, done):**
+**stocker_transition(*state*, *action*, *reward*, *next_state*, *done*):**
 Enregistre les transitions (état, action, récompense, état suivant, et fin d’épisode) dans une mémoire tampon (*deque*). Cette mémoire est ensuite utilisée pour former des mini-lots pour l'entraînement du réseau neuronal, permettant ainsi un apprentissage par mini-lots avec répétition d'expériences passées (*replay memory*), ce qui stabilise l'apprentissage du modèle DQN.
 
 **entrainer_dqn():**
