@@ -1,6 +1,6 @@
 # Pong-player-DQN-agent
 
-As part of the unsupervised learning course in the second year of the Master Data science for business and economics program, this project aims to train a DQN Agent to play in a Pong environment. We'll be looking at a number of approaches, including training with a Q-Learning Agent, before moving on to a DQN Agent which, thanks to its NN architecture, will be able to converge more quickly in a 640*480 environment. We'll also be playing with the DQN's hyperparameters, for which we'll first exploit CPU resources and then GPU resources from the pytorch package using cuda.
+As part of the unsupervised learning course in the second year of the Master Data science for business and economics program, this project aims to train a DQN Agent to play in a Pong environment. We'll be looking at a number of approaches, including training with a Q-Learning Agent, before moving on to a DQN Agent which, thanks to its NN architecture, will be able to converge more quickly in a 640*480 environment. We'll also be playing with the DQN's hyperparameters, for which we'll exploit GPU resources from the pytorch package using cuda.
 
 # Les scripts
 ## Les Scripts d'Entrainement:
@@ -8,7 +8,7 @@ As part of the unsupervised learning course in the second year of the Master Dat
 **1-pong_Qlearning_Discret.py:** Permet d'entrainer le modèle Q-learning en environnement discret.\
 Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/1_q_learning_log.csv"
-- La vidéo "Records\1_q_table_record.avi" (non disponible sur github en raison du poids de la video)
+- La vidéo "Records/1_q_table_record.avi" (non disponible sur github en raison du poids de la video)
 
 **1.2-pong_Qlearning_rdm.py:** Permet d'entrainer le modèle Q-learning en environnement discret avec récompenses aléatoires pour chacune des actions.\
 Permet d'obtenir en sortie :
@@ -20,9 +20,9 @@ Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/1.5_q_learning_continuous_log.csv"
 
 **2-pong_DQN_Discret.py:** Permet d'entrainer le modèle Deep Q-Network en environnement discret.\
-Permet d'obtenir en sortie :\
+Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/2_pong_dqn_discret_training_log.csv"
-- Le modèle entrainé "ModelsPTH\2_dqn_discret.pth"
+- Le modèle entrainé "ModelsPTH/2_dqn_discret.pth"
 
 
 **2.5-pong_DQN_Continu.py:** Permet d'entrainer le modèle Deep Q-Network en environnement continu.\
@@ -39,7 +39,7 @@ Permet d'obtenir en sortie :
 Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/3.5_pong_double_dqn_continuous_training_log.csv"
 - Le modèle entrainé "ModelsPTH/3.5_Ddqn_continuous.pth"
-- La vidéo "Records\3.5_Ddqn_record.avi" (non disponible sur github en raison du poids de la video)
+- La vidéo "Records/3.5_Ddqn_record.avi" (non disponible sur github en raison du poids de la video)
 
 ## Analyse de Données d'Apprentissage et Création de Supports Annexe:
 **1-Q_learning_analysis.py:** Analyse des données d'apprentissage pour les modèles Q-learning.\
