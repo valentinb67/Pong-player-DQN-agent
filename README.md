@@ -70,17 +70,16 @@ Variables de vitesse et de direction\
 *memory* : Mémoire de replay utilisée pour stocker les transitions d'états, représentée par une deque.\
 *frames* : Compteur de frames, utilisé pour déterminer quand mettre à jour le réseau cible dans DQN/Double DQN.
 
-## Variables de récompenses et de suivi d'épisode
+## Variables de récompenses et de suivi d'épisode (Q et TD error)
 *reward* : Récompense immédiate obtenue dans un état donné.\
+*compteur_global*, *compteur_session* : Nombre de fois où l'agent renvoie la balle durant la partie, par épisode (session).\
 *episode_reward* : Récompense totale accumulée pendant un épisode.\
-*episode_loss* : Somme des pertes pour un épisode dans les DQN.\
 *episode_duration* : Durée totale d'un épisode, mesurée en secondes.\
-*done* : Booléen indiquant la fin d'un épisode lorsque la balle sort des limites de jeu.
+*done* : Booléen indiquant la fin d'un épisode lorsque la balle sort des limites de jeu.\
+*true_values*, *value_estimates* : Valeurs réelles et estimées des Q-values pour le suivi des performances d'apprentissage.\
+*td_errors* : Erreurs de différence temporelle (TD error) entre les valeurs réelles et estimées, utilisées pour le suivi et le calcul de la perte.\
+*episode_loss* : Somme des pertes pour un épisode dans les DQN (déduite du TD error).
 
 ## Variables pour l'enregistrement des données et les fichiers CSV
 *csv_file* : Fichier CSV pour enregistrer les statistiques d'apprentissage.\
 *csv_writer* : Objet permettant d'écrire des lignes dans le fichier CSV.
-
-## Variables pour le suivi des valeurs Q et de l'erreur TD
-*true_values*, *value_estimates* : Valeurs réelles et estimées des Q-values pour le suivi des performances d'apprentissage.\
-*td_errors* : Erreurs de différence temporelle (TD error) entre les valeurs réelles et estimées, utilisées pour le suivi et le calcul de la perte.
