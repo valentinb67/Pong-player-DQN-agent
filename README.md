@@ -129,3 +129,19 @@ Contrairement à la fonction **entrainer_dqn**, l'algorithme Double DQN est appl
 ## Variables pour l'enregistrement des données et les fichiers CSV
 *csv_file* : Fichier CSV pour enregistrer les statistiques d'apprentissage.\
 *csv_writer* : Objet permettant d'écrire des lignes dans le fichier CSV.
+
+# Environnement de Développement:
+Prérequis
+Python 3.12+
+
+## Dépendances
+
+**Pour installer les dépendances nécessaires, exécutez la commande suivante :**
+
+Clonez ce dépôt sur votre machine locale :\
+git clone https://github.com/valentinb67/Pong-player-DQN-agent\
+
+**Naviguez dans le répertoire du projet et installez les dépendances :**
+
+cd Pong-player-DQN-agent
+pip install -r requirements.txt
