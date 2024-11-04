@@ -135,7 +135,7 @@ Prérequis:
 Python 3.12+
 
 ## Dépendances
-Nécessite:
+**Nécessite:**
 
 Cuda Toolkit 12.6 Windows (https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local)\
 
