@@ -24,7 +24,6 @@ Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/2_pong_dqn_discret_training_log.csv"
 - Le modèle entrainé "ModelsPTH/2_dqn_discret.pth"
 
-
 **2.5-pong_DQN_Continu.py:** Permet d'entrainer le modèle Deep Q-Network en environnement continu.\
 Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/2.5_pong_dqn_continuous_training_log.csv"
@@ -46,6 +45,11 @@ Permet d'obtenir en sortie :
 **2-DQN_and_DDQN_discret_analysis.py:** Analyse des données d'apprentissage pour les modèles Deep Q-Network et Double Deep Q-Network.\
 **EpsilonDecay_MarginEffect_analysis.py:** Met en évidence l'effet marginal de *Epsilon Decay* sur la vitesse de transition entre *epsilon* et *epsilon_min*.\
 **Space_size.py** Met en évidence la croissance exponentielle du nombre d'état dans l'espace des états pour une augmentation du nombre de pixel.
+
+## Confrontation aux modèles
+Les scripts suivants permettent de se confronter aux modèles DDQN afin de tester leur performances hors indicateurs (ou pour simplement passer un bon moment :D).\
+**#Play vs DDQN discret.py:** Permet de jouer face au DDQN discret.
+**#Play vs DDQN continu.py:** Permet de jouer face au DDQN continu.
 
 # Fonctions Scripts d'Entrainement Modèles
 
