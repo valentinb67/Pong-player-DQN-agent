@@ -1,4 +1,4 @@
-Episode,Epsilon,Reward,Reward cumulee,Episode Duration,Loss,True Value,Value Estimate,TD Error
+Episode,Epsilon,Reward,Reward cumulee,Episode Duration,Loss,True Value,Estimate Value,TD Error
 1,0.9,-10,-9,3.3331964015960693,14.968136578798294,4.3399186,3.9732857,0.36663294
 1,0.9,-10,-9,3.3331964015960693,14.968136578798294,3.5964937,3.1209202,0.47557354
 1,0.9,-10,-9,3.3331964015960693,14.968136578798294,5.5076833,5.0042715,0.50341177

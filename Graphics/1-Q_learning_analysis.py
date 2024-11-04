@@ -34,7 +34,7 @@ axs[0].set_xlabel("Épisode")
 axs[0].set_ylabel("Epsilon")
 axs[0].legend(loc='best')
 
-# Graphique 2: Value Estimate and True Value
+# Graphique 2: Estimate Value and True Value
 for df, label in df_q_discret:
     df_filtered = df[df['Episode'] <= 100]  # Filtrer les épisodes jusqu'à 1000
     if 'Estimate Value' in df_filtered.columns and 'True Value' in df_filtered.columns:

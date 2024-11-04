@@ -61,7 +61,7 @@ nb_actions = 3  # UP, DOWN, STAY
 # Variables pour l'enregistrement des données d'entraînement
 csv_file = open('LearningData/3_pong_double_dqn_discret_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Value Estimate', 'TD Error'])
+csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Estimate Value', 'TD Error'])
 
 # Modèle de réseau de neurones pour DQN
 class DQN(nn.Module):
@@ -108,7 +108,7 @@ def choisir_action(state):
 def stocker_transition(state, action, reward, next_state, done):
     memory.append((state, action, reward, next_state, done))
 
-def entrainer_dqn():
+def entrainer_ddqn():
     if len(memory) < batch_size:
         return 0, [], [], []  # Pas d'entraînement si la mémoire est insuffisante
 
@@ -132,12 +132,12 @@ def entrainer_dqn():
     loss.backward()
     optimizer.step()
 
-    # Calculer les valeurs True Value, Value Estimate et TD Error
+    # Calculer les valeurs True Value, Estimate Value et TD Error
     true_values = expected_q_values.detach().cpu().numpy()
-    value_estimates = q_values.detach().cpu().numpy()
-    td_errors = true_values - value_estimates
+    estimate_values = q_values.detach().cpu().numpy()
+    td_errors = true_values - estimate_values
 
-    return loss.item(), true_values, value_estimates, td_errors  # Retourner la perte et les nouvelles valeurs pour le suivi
+    return loss.item(), true_values, estimate_values, td_errors  # Retourner la perte et les nouvelles valeurs pour le suivi
 
 def reinitialiser_jeu():
     global balle, vitesse_balle_x, vitesse_balle_y
@@ -206,7 +206,7 @@ while episode_count < max_episodes:
 
     next_state = obtenir_etat_discret()
     stocker_transition(state, action_idx, reward, next_state, done)
-    loss, true_values, value_estimates, td_errors = entrainer_dqn()
+    loss, true_values, estimate_values, td_errors = entrainer_ddqn()
     episode_loss += loss  # Ajout de la perte pour chaque batch
 
     frames += 1
@@ -233,8 +233,8 @@ while episode_count < max_episodes:
     # Si l'épisode est terminé, on enregistre les informations dans le CSV
     if done:
         episode_duration = time.time() - start_time
-        for true_value, value_estimate, td_error in zip(true_values, value_estimates, td_errors):
-            csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, value_estimate, td_error])
+        for true_value, estimate_value, td_error in zip(true_values, estimate_values, td_errors):
+            csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, estimate_value, td_error])
 
         # Mise à jour d'epsilon à la fin de chaque épisode
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
