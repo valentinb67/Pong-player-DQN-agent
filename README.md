@@ -7,12 +7,12 @@ As part of the unsupervised learning course in the second year of the Master Dat
 
 **1-pong_Qlearning_Discret.py:** Permet d'entrainer le modèle Q-learning en environnement discret.\
 Permet d'obtenir en sortie :
-- Les données d'entrainement "LearningData/1_q_learning_log.csv"\
+- Les données d'entrainement "LearningData/1_q_learning_log.csv"
 - La vidéo "Records\1_q_table_record.avi" (non disponible sur github en raison du poids de la video)
 
 **1.2-pong_Qlearning_rdm.py:** Permet d'entrainer le modèle Q-learning en environnement discret avec récompenses aléatoires pour chacune des actions.\
 Permet d'obtenir en sortie :
-- Les données d'entrainement "LearningData/1.2_q_learning_rdm_log.csv"\
+- Les données d'entrainement "LearningData/1.2_q_learning_rdm_log.csv"
 - La vidéo "Records/1.2_q_record_rdm.avi" (non disponible sur github en raison du poids de la video)
 
 **1.5-pong_Qlearning_Continu.py:** Permet d'entrainer le modèle Q-learning en environnement continu.\
@@ -21,18 +21,18 @@ Permet d'obtenir en sortie :
 
 **2-pong_DQN_Discret.py:** Permet d'entrainer le modèle Deep Q-Network en environnement discret.\
 Permet d'obtenir en sortie :\
-- Les données d'entrainement "LearningData/2_pong_dqn_discret_training_log.csv"\
+- Les données d'entrainement "LearningData/2_pong_dqn_discret_training_log.csv"
 - Le modèle entrainé "ModelsPTH\2_dqn_discret.pth"
 
 
 **2.5-pong_DQN_Continu.py:** Permet d'entrainer le modèle Deep Q-Network en environnement continu.\
 Permet d'obtenir en sortie :
-- Les données d'entrainement "LearningData/2.5_pong_dqn_continuous_training_log.csv"\
+- Les données d'entrainement "LearningData/2.5_pong_dqn_continuous_training_log.csv"
 - Le modèle entrainé "ModelsPTH/2.5_dqn_continuous.pth"
 
 **3-pong_DDQN_Discret.py:** Permet d'entrainer le modèle Double Deep Q-Network en environnement discret.\
 Permet d'obtenir en sortie : 
-- Les données d'entrainement "LearningData/3_pong_double_dqn_discret_training_log.csv"\
+- Les données d'entrainement "LearningData/3_pong_double_dqn_discret_training_log.csv"
 - Le modèle entrainé "ModelsPTH/3_Ddqn_discret.pth"
 
 **3.5-pong_DDQN_Continu.py:** Permet d'entrainer le modèle Double Deep Q-Network en environnement continu.\
