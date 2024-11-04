@@ -4,16 +4,16 @@ As part of the unsupervised learning course in the second year of the Master Dat
 
 # Fonctions Scripts d'Entrainement Modèles
 
-**discretiser(val, intervalle, nb_divisions):**
+**discretiser(*val*, *intervalle*, *nb_divisions*):**
 Permet de convertir une valeur continue en une valeur discrète, en la divisant en un nombre spécifié de divisions (*nb_divisions*). Elle est utilisée pour réduire l'espace d'état à des valeurs discrètes, ce qui est essentiel pour l'algorithme de Q-learning qui fonctionne avec des états discrets.
 
 **obtenir_etat_discret():**
 Génère un état discret du jeu en utilisant la fonction discretiser. Elle récupère la position de la balle, sa direction, ainsi que la position de la raquette de l’ordinateur, puis retourne ces valeurs sous forme de tuple. Cela permet de créer un état compact et gérable pour l’apprentissage par renforcement.
 
-**choisir_action(state):**
+**choisir_action(*state*):**
 Implémente la stratégie epsilon-greedy pour choisir une action basée sur l’état actuel. Elle retourne une action aléatoire avec une probabilité epsilon pour encourager l'exploration, ou l’action avec la meilleure estimation de récompense selon la q_table pour l’exploitation.
 
-**mise_a_jour_q_table(etat, action, reward, etat_suivant):**
+**mise_a_jour_q_table(*etat*, *action*, reward, etat_suivant):**
 Met à jour la Q-table en appliquant l'algorithme de Q-learning. Elle utilise l'état actuel, l'action prise, la récompense obtenue, et l'état suivant pour ajuster la valeur associée dans la Q-table. Elle retourne aussi des valeurs comme l’erreur de temporal difference (*td_error*), la valeur attendue (*true_value*), la valeur estimée (*estimate_value*), et la perte (*loss*) pour enregistrement.
 
 **reinitialiser_jeu():**
