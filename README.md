@@ -137,7 +137,7 @@ Python 3.12+
 ## Dépendances
 **Nécessite:**
 
-Cuda Toolkit 12.6 Windows https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local \
+Cuda Toolkit 12.6 Windows https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local 
 
 Pour utiliser pytorch sur Windows avec son GPU en local (https://pytorch.org/get-started/locally) :\
 **via pip:**
@@ -150,7 +150,7 @@ conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvi
 ```
 **Pour installer les dépendances nécessaires, exécutez la commande suivante :**
 
-Clonez ce dépôt sur votre machine locale :\
+Clonez ce dépôt sur votre machine locale :
 ```
 git clone https://github.com/valentinb67/Pong-player-DQN-agent
 ```
