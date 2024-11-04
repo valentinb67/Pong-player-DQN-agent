@@ -48,8 +48,9 @@ Permet d'obtenir en sortie :
 
 ## Confrontation aux modèles
 Les scripts suivants permettent de se confronter aux modèles DDQN afin de tester leur performances hors indicateurs (ou pour simplement passer un bon moment :D).\
-**#Play vs DDQN discret.py:** Permet de jouer face au DDQN discret.
-**#Play vs DDQN continu.py:** Permet de jouer face au DDQN continu.
+**#Play vs DDQN discret.py:** Permet de jouer face au DDQN discret.\
+**#Play vs DDQN continu.py:** Permet de jouer face au DDQN continu.\
+Ces scripts prennent en entrée les fichiers en extension .pth ("ModelsPTH/3_Ddqn_discret.pth", "ModelsPTH/3.5_Ddqn_continuous.pth") qui contiennent les poids ajustés pendant leur entrainement respectivement dans les scripts **3-pong_DDQN_Discret.py** et **3.5-pong_DDQN_Continu.py**.
 
 # Fonctions Scripts d'Entrainement Modèles
 
