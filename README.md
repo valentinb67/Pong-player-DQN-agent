@@ -139,7 +139,7 @@ Python 3.12+
 **Pour installer les dépendances nécessaires, exécutez la commande suivante :**
 
 Clonez ce dépôt sur votre machine locale :\
-git clone https://github.com/valentinb67/Pong-player-DQN-agent\
+git clone https://github.com/valentinb67/Pong-player-DQN-agent
 
 **Naviguez dans le répertoire du projet et installez les dépendances :**
 
