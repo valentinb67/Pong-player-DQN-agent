@@ -33,8 +33,8 @@ Contrairement à la fonction **entrainer_dqn**, l'algorithme Double DQN est appl
 # Variables
 
 ## Variables de configuration et d'initialisation
-*largeur*, *hauteur* : Dimensions de la fenêtre du jeu.
-*fenetre* : Surface de la fenêtre de jeu créée avec Pygame.
+*largeur*, *hauteur* : Dimensions de la fenêtre du jeu.\
+*fenetre* : Surface de la fenêtre de jeu créée avec Pygame.\
 *blanc* : Couleur blanche utilisée pour dessiner les objets.
 *font*: Police de texte pour l'affichage des scores.
 *device* : Périphérique d'exécution pour PyTorch, configuré sur CUDA si disponible, sinon CPU.
