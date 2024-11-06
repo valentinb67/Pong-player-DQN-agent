@@ -3,6 +3,7 @@ import pandas as pd
 
 # Lire les fichiers CSV
 df_q_learning_discret = pd.read_csv('/Users/valen/Documents/GitHub/Pong-player-DQN-agent/LearningData/1_q_learning_log.csv')
+df_q_learning_decay = pd.read_csv('/Users/valen/Documents/GitHub/Pong-player-DQN-agent/LearningData/1.1_q_learning_decay_log.csv')
 df_q_learning_rdm = pd.read_csv('/Users/valen/Documents/GitHub/Pong-player-DQN-agent/LearningData/1.2_q_learning_rdm_log.csv')
 df_q_continuous = pd.read_csv('/Users/valen/Documents/GitHub/Pong-player-DQN-agent/LearningData/1.5_q_learning_continuous_log.csv')
 df_dqn_discret = pd.read_csv('/Users/valen/Documents/GitHub/Pong-player-DQN-agent/LearningData/2_pong_dqn_discret_training_log.csv')
@@ -14,11 +15,12 @@ df_Ddqn_continu = pd.read_csv('/Users/valen/Documents/GitHub/Pong-player-DQN-age
 df_q_discret = [
     (df_q_learning_rdm, 'Q-Learning Rdm'),
     (df_q_learning_discret, 'Q-Learning Discret'),
-    (df_q_continuous, 'Q-Learning Continu')
+    (df_q_continuous, 'Q-Learning Continu'),
+    (df_q_learning_decay,'Q-learning Decay')
 ]
 
 # Définir une palette de couleurs unique
-colors = ['blue', 'orange', 'green']
+colors = ['blue', 'orange', 'green', 'violet']
 color_map = {label: color for (_, label), color in zip(df_q_discret, colors)}
 
 # Créer des graphiques pour visualiser les données
