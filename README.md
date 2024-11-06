@@ -129,3 +129,34 @@ Contrairement à la fonction **entrainer_dqn**, l'algorithme Double DQN est appl
 ## Variables pour l'enregistrement des données et les fichiers CSV
 *csv_file* : Fichier CSV pour enregistrer les statistiques d'apprentissage.\
 *csv_writer* : Objet permettant d'écrire des lignes dans le fichier CSV.
+
+# Environnement de Développement:
+Prérequis:
+Python 3.12+
+
+## Dépendances
+**Nécessite:**
+
+Cuda Toolkit 12.6 Windows https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local 
+
+Pour utiliser pytorch sur Windows avec son GPU en local (https://pytorch.org/get-started/locally) :\
+**via pip:**
+```
+-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+```
+**via environnement conda:**
+```
+conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+```
+**Pour installer les dépendances nécessaires, exécutez la commande suivante :**
+
+Clonez ce dépôt sur votre machine locale :
+```
+git clone https://github.com/valentinb67/Pong-player-DQN-agent
+```
+
+**Naviguez dans le répertoire du projet et installez les dépendances :**
+```
+cd Pong-player-DQN-agent
+pip install -r requirements.txt
+```
