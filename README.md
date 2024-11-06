@@ -1,6 +1,6 @@
 # Pong-player-DQN-agent
 
-As part of the unsupervised learning course in the second year of the Master Data science for business and economics program, this project aims to train a DQN Agent to play in a Pong environment. We'll be looking at a number of approaches, including training with a Q-Learning Agent, before moving on to a DQN Agent which, thanks to its NN architecture, will be able to converge more quickly in a 640*480 environment. We'll also be playing with the DQN's hyperparameters, for which we'll exploit GPU resources from the pytorch package using cuda.
+As part of the Reinforcement Learning course in the second year of the Master Data science for business and economics program, this project aims to train a DQN Agent to play in a Pong environment. We'll be looking at a number of approaches, including training with a Q-Learning Agent, before moving on to a DQN Agent which, thanks to its NN architecture, will be able to converge more quickly in a 640*480 environment. We'll also be playing with the DQN's hyperparameters, for which we'll exploit GPU resources from the pytorch package using cuda.
 
 # Les scripts
 ## Les Scripts d'Entrainement:
@@ -9,6 +9,11 @@ As part of the unsupervised learning course in the second year of the Master Dat
 Permet d'obtenir en sortie :
 - Les données d'entrainement "LearningData/1_q_learning_log.csv"
 - La vidéo "Records/1_q_table_record.avi" (non disponible sur github en raison du poids de la video)
+
+**1.1-pong_Qlearning_Discret_decay.py:** Permet d'entrainer le modèle Q-learning en environnement discret avec un paramètre d'exploration décroissant.\
+Permet d'obtenir en sortie :
+- Les données d'entrainement "LearningData/1.1_q_learning_decay_log.csv"
+- La vidéo "Records/1.1_q_table_decay_record.avi" (non disponible sur github en raison du poids de la video)
 
 **1.2-pong_Qlearning_rdm.py:** Permet d'entrainer le modèle Q-learning en environnement discret avec récompenses aléatoires pour chacune des actions.\
 Permet d'obtenir en sortie :
