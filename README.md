@@ -137,7 +137,7 @@ Contrairement à la fonction **entrainer_dqn**, l'algorithme Double DQN est appl
 *csv_writer* : Objet permettant d'écrire des lignes dans le fichier CSV.
 
 # Arborescence
-
+```
 Structure du dossier 
 ¦   #Play vs DDQN continu.py
 ¦   #Play vs DDQN discret.py
@@ -197,7 +197,8 @@ Structure du dossier
 +---Records
         IA_PONG_usebug.mp4
         IA_PONG_usebugv2.mp4
-        
+```
+
 # Environnement de Développement:
 Prérequis:
 Python 3.12+
