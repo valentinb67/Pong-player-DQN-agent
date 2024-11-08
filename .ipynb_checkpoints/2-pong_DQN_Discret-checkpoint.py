@@ -9,6 +9,7 @@ import torch.optim as optim
 import csv
 import time  # Pour mesurer la durée de l'épisode
 
+print(torch.cuda.device_count())
 # Initialisation de pygame
 pygame.init()
 
@@ -56,10 +57,11 @@ episode_count = 0
 memory = deque(maxlen=memory_size)
 
 # Paramètres du jeu
-nb_actions = 3  # UP, DOWN, STAY
+actions = ["UP", "DOWN", "STAY"]
+nb_actions = len(actions)
 
 # Variables pour l'enregistrement des données d'entraînement
-csv_file = open('LearningData/2.5_pong_dqn_continuous_training_log.csv', mode='w', newline='')
+csv_file = open('LearningData/2_pong_dqn_discret_training_log.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode Duration', 'Loss', 'True Value', 'Estimate Value', 'TD Error'])
 
@@ -105,21 +107,29 @@ target_net.eval()
 optimizer = optim.Adam(policy_net.parameters(), lr=alpha)
 loss_fn = nn.MSELoss()
 
-def obtenir_etat_continu():
+def discretiser(val, intervalle, nb_divisions):
     """
-    Renvoie un tableau représentant l'état actuel du jeu, comprenant :
-    - Position normalisée de la balle (x, y)
-    - Vitesse normalisée de la balle (vx, vy)
-    - Position normalisée de la raquette de l'IA
-    
+    Discrétise une valeur donnée en fonction d'un intervalle et d'un nombre de divisions.
+    Args:
+        val (float): La valeur à discrétiser.
+        intervalle (float): L'intervalle sur lequel la valeur est mesurée.
+        nb_divisions (int): Le nombre de divisions pour discrétiser l'intervalle.
     Return:
-        np.array: Un tableau de 5 valeurs représentant l'état du jeu.
+        int: L'indice correspondant à la valeur discrétisée.
     """
-    etat_x = balle.x / largeur
-    etat_y = balle.y / hauteur
-    etat_vx = vitesse_balle_x / 12.0
-    etat_vy = vitesse_balle_y / 12.0
-    raquette_pos = raquette2.y / hauteur
+    return min(nb_divisions - 1, max(0, int(val / intervalle * nb_divisions)))
+
+def obtenir_etat_discret():
+    """
+    Donne l'état actuel discrétisé du jeu. L'état est composé de la position de la balle (x, y), de la vitesse de la balle (vx, vy), et de la position de la raquette de l'IA.
+    Return:
+        np.array: Un tableau contenant l'état discrétisé.
+    """
+    etat_x = discretiser(balle.x, largeur, 85)  # 30-40 segments pour la position en x
+    etat_y = discretiser(balle.y, hauteur, 85)  # 30-40 segments pour la position en y
+    etat_vx = -1 if vitesse_balle_x < -2 else (1 if vitesse_balle_x > 2 else 0)  # -1, 0, 1 pour la vitesse x
+    etat_vy = -1 if vitesse_balle_y < -2 else (1 if vitesse_balle_y > 2 else 0)  # -1, 0, 1 pour la vitesse y
+    raquette_pos = discretiser(raquette2.y, hauteur, 55)  # 20-30 segments pour la raquette
     return np.array([etat_x, etat_y, etat_vx, etat_vy, raquette_pos], dtype=np.float32)
 
 def choisir_action(state):
@@ -199,108 +209,116 @@ def reinitialiser_jeu():
 
 # Boucle principale
 frames = 0
+
 while episode_count < max_episodes:
     episode_reward = 0
     episode_loss = 0  # Suivi de la perte totale pour l'épisode
     start_time = time.time()  # Début de l'épisode
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            torch.save(policy_net.state_dict(), 'ModelsPTH/2.5_dqn_continuous.pth')  # Enregistrer le modèle avant de quitter
-            pygame.quit()
-            sys.exit()
-
-    # Obtention de l'état actuel
-    state = obtenir_etat_continu()
-
-    # Tracker de la balle
-    raquette1.y = balle.y
-
-    # Définition de l'action
-    action_idx = choisir_action(state)
-    if action_idx == 0 and raquette2.top > 0:
-        raquette2.y -= 10
-    elif action_idx == 1 and raquette2.bottom < hauteur:
-        raquette2.y += 10
-
-    # Mise à jour de la position de la balle
-    balle.x += vitesse_balle_x
-    balle.y += vitesse_balle_y
-
-    if balle.top <= 0 or balle.bottom >= hauteur:
-        vitesse_balle_y = -vitesse_balle_y
-
-    # Initialisation de la récompense
-    reward = 0
-
-    # Collision avec les raquettes
-    if balle.colliderect(raquette1):
-        vitesse_balle_x = -vitesse_balle_x
-        balle.left = raquette1.right
-        
-    if balle.colliderect(raquette2):
-        vitesse_balle_x = -vitesse_balle_x
-        balle.right = raquette2.left
-        reward = 1
-
     done = False
-    # Mise à jour des scores et réinitialisation si la balle sort de l'écran
-    if balle.left <= 0:
-        score_joueur2 += 1  # Mise à jour du score du joueur 2
-        reward = -10
-        done = True
-        reinitialiser_jeu()
-        episode_count += 1
 
-    if balle.right >= largeur:
-        score_joueur1 += 1  # Mise à jour du score du joueur 1
-        reward = -10
-        done = True
-        reinitialiser_jeu()
-        episode_count += 1
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                torch.save(policy_net.state_dict(), 'ModelsPTH/2_dqn_discret.pth')
+                csv_file.close()
+                pygame.quit()
+                sys.exit()
 
-    episode_reward += reward  # Ajout de la récompense au total de l'épisode
+        # Obtention de l'état actuel
+        state = obtenir_etat_discret()
 
-    next_state = obtenir_etat_continu()
-    stocker_transition(state, action_idx, reward, next_state, done)
-    loss, true_values, estimate_values, td_errors = entrainer_dqn()
-    episode_loss += loss  # Ajout de la perte pour chaque batch
+        # Tracker de la balle
+        raquette1.y = balle.y
 
-    frames += 1
-    if frames % target_update == 0:
-        target_net.load_state_dict(policy_net.state_dict())
+        # Définition de l'action
+        action_idx = choisir_action(state)
+        action = actions[action_idx]
 
-    fenetre.fill((0, 0, 0))
+        # Mise à jour de la position de la raquette de l'IA en fonction de l'action choisie
+        if action == "UP" and raquette2.top > 0:
+            raquette2.y -= 10
+        elif action == "DOWN" and raquette2.bottom < hauteur:
+            raquette2.y += 10
 
-    pygame.draw.rect(fenetre, blanc, raquette1)
-    pygame.draw.rect(fenetre, blanc, raquette2)
-    pygame.draw.ellipse(fenetre, blanc, balle)
+        # Mise à jour de la position de la balle
+        balle.x += vitesse_balle_x
+        balle.y += vitesse_balle_y
 
-    # Affichage des scores
-    score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
-    fenetre.blit(score_text, (largeur // 2 - 100, 10))
-    
-    # Affichage de l'épisode et de la valeur epsilon en cours
-    episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
-    fenetre.blit(episode_text, (10, hauteur - 40))
+        if balle.top <= 0 or balle.bottom >= hauteur:
+            vitesse_balle_y = -vitesse_balle_y
 
-    pygame.display.flip()
-    pygame.time.Clock().tick(60)
+        # Initialisation de la récompense
+        reward = 0
+
+        # Collision avec les raquettes
+        if balle.colliderect(raquette1):
+            vitesse_balle_x = -vitesse_balle_x
+            balle.left = raquette1.right
+            
+        if balle.colliderect(raquette2):
+            vitesse_balle_x = -vitesse_balle_x
+            balle.right = raquette2.left
+            reward = 1
+
+        # Mise à jour des scores et réinitialisation si la balle sort de l'écran
+        if balle.left <= 0:
+            score_joueur2 += 1  # Mise à jour du score du joueur 2
+            reward = -10
+            done = True
+            reinitialiser_jeu()
+            episode_count += 1
+
+        if balle.right >= largeur:
+            score_joueur1 += 1  # Mise à jour du score du joueur 1
+            reward = -10
+            done = True
+            reinitialiser_jeu()
+            episode_count += 1
+
+        episode_reward += reward  # Ajout de la récompense au total de l'épisode
+
+        next_state = obtenir_etat_discret()
+        stocker_transition(state, action_idx, reward, next_state, done)
+        loss, true_values, estimate_values, td_errors = entrainer_dqn()
+        episode_loss += loss  # Ajout de la perte pour chaque batch
+
+        frames += 1
+        if frames % target_update == 0:
+            target_net.load_state_dict(policy_net.state_dict())
+
+        # Dessin de l'écran de jeu
+        fenetre.fill((0, 0, 0))
+        pygame.draw.rect(fenetre, blanc, raquette1)
+        pygame.draw.rect(fenetre, blanc, raquette2)
+        pygame.draw.ellipse(fenetre, blanc, balle)
+
+        # Affichage des scores
+        score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
+        fenetre.blit(score_text, (largeur // 2 - 100, 10))
+        
+        # Affichage des scores
+        score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
+        fenetre.blit(score_text, (largeur // 2 - 100, 10))
+
+        # Affichage de l'épisode et de la valeur epsilon en cours
+        episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
+        fenetre.blit(episode_text, (10, hauteur - 40))
+
+        # Mise à jour de l'affichage
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
 
     # Si l'épisode est terminé, on enregistre les informations dans le CSV
     if done:
         episode_duration = time.time() - start_time
         for true_value, estimate_value, td_error in zip(true_values, estimate_values, td_errors):
             csv_writer.writerow([episode_count, epsilon, reward, episode_reward, episode_duration, episode_loss, true_value, estimate_value, td_error])
-            
-        # Mise à jour d'epsilon à la fin de chaque épisode
-        epsilon = max(epsilon_min, epsilon * epsilon_decay)
-        
-# Sauvegarder le modèle après l'entraînement
-torch.save(policy_net.state_dict(), 'ModelsPTH/2.5_dqn_continuous.pth')
 
+    # Mise à jour d'epsilon à la fin de chaque épisode
+    epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        
 # Fermer le fichier CSV après l'entraînement
 csv_file.close()
-
+torch.save(policy_net.state_dict(), 'ModelsPTH/2_dqn_discret.pth')
 pygame.quit()
 sys.exit()

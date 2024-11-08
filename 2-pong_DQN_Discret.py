@@ -68,12 +68,31 @@ csv_writer.writerow(['Episode', 'Epsilon', 'Reward', 'Reward cumulee', 'Episode 
 # Modèle de réseau de neurones pour DQN
 class DQN(nn.Module):
     def __init__(self):
+        """
+        Initialise un réseau de neurones DQN avec trois couches entièrement connectées.
+        
+        Le réseau prend en entrée 5 paramètres :
+        - Position x de la balle
+        - Position y de la balle
+        - Vitesse x de la balle
+        - Vitesse y de la balle
+        - Position de la raquette IA
+        
+        Return : 3 actions possibles (Monter, Descendre, Rester).
+        """
         super(DQN, self).__init__()
         self.fc1 = nn.Linear(5, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, nb_actions)
 
     def forward(self, x):
+        """
+        Définition de la passe avant (forward pass) du réseau de neurones.
+        Args:
+            x (Tensor): Les valeurs d'entrée représentant l'état actuel.
+        Return:
+            Tensor: Les valeurs de sortie correspondant aux scores des actions possibles.
+        """
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         return self.fc3(x)
@@ -89,9 +108,23 @@ optimizer = optim.Adam(policy_net.parameters(), lr=alpha)
 loss_fn = nn.MSELoss()
 
 def discretiser(val, intervalle, nb_divisions):
+    """
+    Discrétise une valeur donnée en fonction d'un intervalle et d'un nombre de divisions.
+    Args:
+        val (float): La valeur à discrétiser.
+        intervalle (float): L'intervalle sur lequel la valeur est mesurée.
+        nb_divisions (int): Le nombre de divisions pour discrétiser l'intervalle.
+    Return:
+        int: L'indice correspondant à la valeur discrétisée.
+    """
     return min(nb_divisions - 1, max(0, int(val / intervalle * nb_divisions)))
 
 def obtenir_etat_discret():
+    """
+    Donne l'état actuel discrétisé du jeu. L'état est composé de la position de la balle (x, y), de la vitesse de la balle (vx, vy), et de la position de la raquette de l'IA.
+    Return:
+        np.array: Un tableau contenant l'état discrétisé.
+    """
     etat_x = discretiser(balle.x, largeur, 85)  # 30-40 segments pour la position en x
     etat_y = discretiser(balle.y, hauteur, 85)  # 30-40 segments pour la position en y
     etat_vx = -1 if vitesse_balle_x < -2 else (1 if vitesse_balle_x > 2 else 0)  # -1, 0, 1 pour la vitesse x
@@ -100,6 +133,13 @@ def obtenir_etat_discret():
     return np.array([etat_x, etat_y, etat_vx, etat_vy, raquette_pos], dtype=np.float32)
 
 def choisir_action(state):
+    """
+    Choisit une action en fonction de l'état actuel en utilisant le réseau de neurones DQN.
+    Args:
+        state (np.array): L'état actuel du jeu sous forme de tableau.
+    Return:
+        int: L'indice de l'action choisie (0 = Monter, 1 = Descendre, 2 = Rester).
+    """
     global epsilon
     if random.uniform(0, 1) < epsilon:
         return random.choice(range(nb_actions))
@@ -109,9 +149,26 @@ def choisir_action(state):
             return policy_net(state_tensor).argmax().item()
 
 def stocker_transition(state, action, reward, next_state, done):
+    """
+    Stocke une transition (expérience) dans la mémoire.
+    Args:
+        state (np.array): L'état actuel.
+        action (int): L'action choisie (0, 1 ou 2).
+        reward (float): La récompense reçue suite à l'action.
+        next_state (np.array): Le prochain état atteint.
+        done (bool): Indique si l'épisode est terminé.
+    """
     memory.append((state, action, reward, next_state, done))
 
 def entrainer_dqn():
+    """
+    Entraîne le réseau DQN en utilisant un échantillon aléatoire de la mémoire.
+    Return:
+        Loss (float): La valeur de la perte calculée lors de l'entraînement.
+        true_value (list): Valeurs vérité (True Value) des échantillons.
+        estimate_value (list): Valeurs estimées (Estimate Value) des échantillons.
+        td_error (list): Erreurs TD (TD Error) pour chaque échantillon.
+    """
     if len(memory) < batch_size:
         return 0, [], [], []  # Pas d'entraînement si la mémoire est insuffisante
 
@@ -141,6 +198,10 @@ def entrainer_dqn():
     return loss.item(), true_values, estimate_values, td_errors  # Retourner la perte et les nouvelles valeurs pour le suivi
 
 def reinitialiser_jeu():
+    """
+    Réinitialise la position de la balle au centre de l'écran et réinitialise ses vitesses initiales.
+    Cette fonction est appelée chaque fois qu'un joueur marque un point.
+    """
     global balle, vitesse_balle_x, vitesse_balle_y
     balle = pygame.Rect(largeur // 2 - 15, hauteur // 2 - 15, 30, 30)
     vitesse_balle_x = -12
@@ -163,26 +224,33 @@ while episode_count < max_episodes:
                 pygame.quit()
                 sys.exit()
 
+        # Obtention de l'état actuel
         state = obtenir_etat_discret()
 
+        # Tracker de la balle
         raquette1.y = balle.y
-        
+
+        # Définition de l'action
         action_idx = choisir_action(state)
         action = actions[action_idx]
 
+        # Mise à jour de la position de la raquette de l'IA en fonction de l'action choisie
         if action == "UP" and raquette2.top > 0:
             raquette2.y -= 10
         elif action == "DOWN" and raquette2.bottom < hauteur:
             raquette2.y += 10
 
+        # Mise à jour de la position de la balle
         balle.x += vitesse_balle_x
         balle.y += vitesse_balle_y
 
         if balle.top <= 0 or balle.bottom >= hauteur:
             vitesse_balle_y = -vitesse_balle_y
 
+        # Initialisation de la récompense
         reward = 0
-        
+
+        # Collision avec les raquettes
         if balle.colliderect(raquette1):
             vitesse_balle_x = -vitesse_balle_x
             balle.left = raquette1.right
@@ -192,6 +260,7 @@ while episode_count < max_episodes:
             balle.right = raquette2.left
             reward = 1
 
+        # Mise à jour des scores et réinitialisation si la balle sort de l'écran
         if balle.left <= 0:
             score_joueur2 += 1  # Mise à jour du score du joueur 2
             reward = -10
@@ -217,8 +286,8 @@ while episode_count < max_episodes:
         if frames % target_update == 0:
             target_net.load_state_dict(policy_net.state_dict())
 
+        # Dessin de l'écran de jeu
         fenetre.fill((0, 0, 0))
-
         pygame.draw.rect(fenetre, blanc, raquette1)
         pygame.draw.rect(fenetre, blanc, raquette2)
         pygame.draw.ellipse(fenetre, blanc, balle)
@@ -227,7 +296,7 @@ while episode_count < max_episodes:
         score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
         fenetre.blit(score_text, (largeur // 2 - 100, 10))
         
-            # Affichage des scores
+        # Affichage des scores
         score_text = font.render(f"Joueur 1: {score_joueur1}  Joueur 2: {score_joueur2}", True, blanc)
         fenetre.blit(score_text, (largeur // 2 - 100, 10))
 
@@ -235,6 +304,7 @@ while episode_count < max_episodes:
         episode_text = font.render(f"Episode: {episode_count}  Epsilon: {epsilon:.3f}", True, blanc)
         fenetre.blit(episode_text, (10, hauteur - 40))
 
+        # Mise à jour de l'affichage
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
