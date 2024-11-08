@@ -1,7 +1,7 @@
 # Pong-player-DQN-agent
 
 Dans le cadre du cours d'Apprentissage par Renforcement de la deuxième année du Master en Data Science pour l'Économie et l"entreprise, ce projet vise à entraîner un agent DQN à jouer dans un environnement Pong. Nous examinerons plusieurs approches, notamment l'entraînement avec un agent Q-Learning, avant de passer à un agent Deep Q-Network (DQN) et Double Deep Q-Network(DDQN) qui, grâce à leur architecture de réseau de neurones, pourra converger plus rapidement dans un environnement 640*480. L'agent DDQN améliorera les performances en réduisant la surestimation. Nous jouerons également avec les hyperparamètres de nos modèles afin de mettre en évidence des résultats empiriques.
-Dans ce projet nous exploitant les ressources GPU à l'aide du package PyTorch en utilisant CUDA.
+Dans ce projet nous entrainons nos réseaux de neurones en exploitant les ressources GPU à l'aide du package PyTorch en utilisant CUDA.
 
 # Les scripts
 ## Les Scripts d'Entrainement:
