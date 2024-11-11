@@ -132,7 +132,7 @@ def mise_a_jour_q_table(etat, action, reward, etat_suivant):
     td_error = true_value - estimate_value
     
     # Mise à jour de la Q-Table
-    q_table[etat][action_idx] = estimate_value + alpha * td_error
+    q_table[etat][action_idx] = (1-alpah) * estimate_value + alpha * td_error
     
     # Calcul de la perte
     loss = (1/2)*td_error ** 2
@@ -166,10 +166,10 @@ while episode_count < max_episodes:  # Condition de fin basée sur max_episodes
     # Tracker de la balle sur la raquette 1
     raquette1.y = balle.y
 
-    # Obtenir l'état actuel t
+    # Obtenir l'état actuel s
     etat = obtenir_etat_discret()
 
-    # L'ordinateur choisit une action
+    # L'ordinateur choisit une action a
     action = choisir_action(etat)
 
     # Exécution de l'action
