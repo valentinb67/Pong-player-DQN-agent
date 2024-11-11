@@ -162,16 +162,17 @@ def entrainer_dqn():
     if len(memory) < batch_size:
         return 0, [], [], []  # Pas d'entraînement si la mémoire est insuffisante
 
-    batch = random.sample(memory, batch_size)
-    states, actions, rewards, next_states, dones = zip(*batch)
+    batch = random.sample(memory, batch_size)    
+    states, actions, rewards, next_states, dones = zip(*batch)    #Division en plusieurs listes (s, a, r, s', done)
 
+    #Conversion en tensors
     states = torch.tensor(states).to(device)
     actions = torch.tensor(actions).unsqueeze(1).to(device)
     rewards = torch.tensor(rewards).to(device)
     next_states = torch.tensor(next_states).to(device)
     dones = torch.tensor(dones, dtype=torch.float32).to(device)
 
-    q_values = policy_net(states).gather(1, actions).squeeze()
+    q_values = policy_net(states).gather(1, actions).squeeze() #    
     next_q_values = target_net(next_states).max(1)[0]
     expected_q_values = rewards + (gamma * next_q_values * (1 - dones))
 
