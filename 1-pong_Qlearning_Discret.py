@@ -132,7 +132,7 @@ def mise_a_jour_q_table(etat, action, reward, etat_suivant):
     td_error = true_value - estimate_value
     
     # Mise à jour de la Q-Table
-    q_table[etat][action_idx] = (1-alpah) * estimate_value + alpha * td_error
+    q_table[etat][action_idx] = (1-alpha) * estimate_value + alpha * td_error
     
     # Calcul de la perte
     loss = (1/2)*td_error ** 2
